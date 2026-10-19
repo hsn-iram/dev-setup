@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# tclaude [dir]: open (or reattach to) a tmux session for a project, with
+# Claude Code on the left and a shell on the right. Session name = folder name.
+set -euo pipefail
+
+dir="$(cd "${1:-$PWD}" && pwd)"
+name="$(basename "$dir")"
+name="${name//[^A-Za-z0-9_-]/_}"
+
+command -v tmux >/dev/null || { echo "tmux isn't installed (brew install tmux)" >&2; exit 1; }
+
+if ! tmux has-session -t "=$name" 2>/dev/null; then
+  tmux new-session -d -s "$name" -n claude -c "$dir"
+  tmux send-keys -t "=$name:claude" 'claude' Enter
+  tmux split-window -h -t "=$name:claude" -c "$dir"
+  tmux select-pane -t "=$name:claude" -L
+fi
+
+if [[ -n "${TMUX:-}" ]]; then
+  tmux switch-client -t "=$name"
+else
+  tmux attach-session -t "=$name"
+fi

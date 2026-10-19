@@ -1,0 +1,35 @@
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck -x install.sh lib/common.sh steps/*.sh bin/tclaude
+      - name: JSON manifests parse
+        run: |
+          python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
+          python3 -m json.tool plugins/iram-skills/.claude-plugin/plugin.json > /dev/null
+      - name: tmux config loads cleanly
+        run: |
+          sudo apt-get install -y -qq tmux
+          tmux -L ci -f /dev/null new-session -d
+          out="$(tmux -L ci source-file tmux/tmux.conf 2>&1)"; echo "$out"
+          tmux -L ci kill-server
+          test -z "$out"
+
+  macos-dry-run:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dry run changes nothing
+        run: |
+          before="$(ls -la ~)"
+          ./install.sh --dry-run --yes
+          test "$before" = "$(ls -la ~)"

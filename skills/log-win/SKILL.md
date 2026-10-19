@@ -6,7 +6,7 @@ license: MIT
 
 # Log a win to the Brag Doc
 
-The Brag Doc is the user's running record of their work for reviews. Use the link or location from the current project or conversation. If there isn't one, ask for it. Never store the link in this repo (it's public). It has a "Wins" table: Date | What I did | Impact (who benefited, measured how) | Senior signal.
+The Brag Doc is the user's running record of their work for reviews. Use the link or location from the current project or conversation. If there isn't one, ask for it. Never write the link into the dev-setup repo or any other public repo. It has a "Wins" table: Date | What I did | Impact (who benefited, measured how) | Senior signal.
 
 ## Steps
 

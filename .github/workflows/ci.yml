@@ -5,13 +5,15 @@ on:
 permissions:
   contents: read
 
+# Actions are pinned to full commit SHAs (tag in the comment), so a moved tag
+# can't change what runs here.
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: shellcheck
-        run: shellcheck -x install.sh lib/common.sh steps/*.sh bin/tclaude bin/validate-skills
+        run: shellcheck -x install.sh lib/common.sh steps/*.sh bin/tclaude bin/validate-skills tests/run.sh
       - name: tmux config loads cleanly
         run: |
           sudo apt-get install -y -qq tmux
@@ -23,8 +25,8 @@ jobs:
   skills:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
       - name: Install skills-ref (Agent Skills reference validator)
@@ -32,12 +34,27 @@ jobs:
       - name: Validate every skill against the Agent Skills spec
         run: bin/validate-skills
 
-  macos-dry-run:
-    runs-on: macos-latest
+  # End-to-end tests against a throwaway HOME. macOS matters: its default bash is 3.2.
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Dry run changes nothing
-        run: |
-          before="$(ls -la ~)"
-          ./install.sh --dry-run --yes
-          test "$before" = "$(ls -la ~)"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # one test needs an older commit
+      - name: Run tests
+        run: /bin/bash --version | head -1 && tests/run.sh
+
+  # Scan the full history for committed secrets.
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

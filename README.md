@@ -1,6 +1,6 @@
-# mac-setup
+# dev-setup
 
-My Mac setup, in one re-runnable script. It installs Claude Code and a set of plugins and skills, configures tmux for Claude Code, and installs Cursor with the Claude Code extension.
+My Mac dev setup, in one re-runnable script. It installs Claude Code and a set of plugins, links my own agent skills (usable from any agent that supports [Agent Skills](https://agentskills.io)), installs my user-level `CLAUDE.md`, configures tmux for Claude Code, and installs Cursor with the Claude Code extension.
 
 It's built to be safe on a work laptop:
 
@@ -36,11 +36,11 @@ Follow the instructions at [brew.sh](https://brew.sh). Then, if the installer te
 
 ### 3. Download this repo
 
-The repo is public, so you don't need to sign in to GitHub to download it. Keep it at `~/mac-setup`, because your personal skills load straight from this folder.
+The repo is public, so you don't need to sign in to GitHub to download it. Keep it at `~/dev-setup`, because your personal skills are linked straight from this folder.
 
 ```bash
-git clone https://github.com/hsn-iram/mac-setup.git ~/mac-setup
-cd ~/mac-setup
+git clone https://github.com/hsn-iram/dev-setup.git ~/dev-setup
+cd ~/dev-setup
 ```
 
 Read `install.sh` and the files in `steps/` before you run anything. It's good practice with any setup script, and they're short.
@@ -106,7 +106,8 @@ A browser opens for login. On a work Mac, use the account your company approved.
 claude --version          # Claude Code is installed
 claude plugin list        # the plugins from config/plugins.conf
 tmux -V                   # tmux is installed
-tclaude ~/mac-setup       # tmux session: Claude Code left, shell right (Ctrl+b then d to leave)
+ls -l ~/.agents/skills ~/.claude/skills   # links to this repo's skills/
+tclaude ~/dev-setup       # tmux session: Claude Code left, shell right (Ctrl+b then d to leave)
 ```
 
 In Cursor, open the Extensions view (Cmd+Shift+X) and check that **Claude Code** (by Anthropic) is installed. Then run `claude` in Cursor's terminal. If it doesn't connect to the editor, run `/ide`.
@@ -129,6 +130,7 @@ In Cursor, open the Extensions view (Cmd+Shift+X) and check that **Claude Code**
 | `preflight` | Nothing. Checks you're on macOS and not running as root, finds Homebrew, and flags company-managed settings or a stray `ANTHROPIC_API_KEY` | — |
 | `claude` | Installs Claude Code with [Anthropic's official installer](https://code.claude.com/docs/en/setup) to `~/.local/bin`. Adds a marked PATH block to `~/.zshrc` | Delete the block between the `mac-setup` markers in `~/.zshrc` |
 | `plugins` | Installs the plugins in `config/plugins.conf` for your user. Turns i-have-adhd on for every session and sets caveman to off by default | `claude plugin uninstall <name>`; `rm ~/.claude/.i-have-adhd-always ~/.config/caveman/config.json` |
+| `skills` | Symlinks each folder in `skills/` into `~/.agents/skills/` and `~/.claude/skills/`, and copies `config/CLAUDE.md` to `~/.claude/CLAUDE.md`. Anything already at those paths is moved to `~/.dev-setup-backup/<timestamp>/` first | Delete the symlinks; restore from `~/.dev-setup-backup/` or `~/.claude/CLAUDE.md.bak.<timestamp>` |
 | `tmux` | Runs `brew install tmux`, writes `~/.tmux.conf`, and installs the `tclaude` helper to `~/.local/bin` | Restore `~/.tmux.conf.bak.<timestamp>` |
 | `cursor` | After asking, runs `brew install --cask cursor`, then adds the Claude Code extension (`anthropic.claude-code`). Doesn't touch Cursor's settings | Uninstall it from Cursor's Extensions view |
 
@@ -151,28 +153,53 @@ The config is a standard set plus the three lines from [Claude Code's tmux guide
   - In copy mode, `v` starts a selection and `y` copies it to the macOS clipboard.
 - Put your own tweaks in `~/.tmux.local.conf`. It's loaded last, and re-running the setup never overwrites it.
 
-## Plugins and skills
+## Plugins
 
-`config/plugins.conf` lists what gets installed:
+`config/plugins.conf` lists the Claude Code plugins that get installed:
 
 - **`document-skills`, `example-skills`** (Anthropic): Word, Excel, PowerPoint and PDF skills, skill-creator, and more.
 - **`i-have-adhd`** ([ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd), third-party, MIT): shapes Claude's replies to lead with the next action. It's on for every session and needs Node for that.
 - **`caveman`** ([JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman), third-party, Apache-2.0): makes Claude's replies terse. Type `/caveman` (or `/caveman ultra`) to turn it on in a session. It's off by default so it doesn't clash with i-have-adhd. Its hooks need Node.
-- **`iram-skills`** (this repo, `plugins/iram-skills`): my own skills, `log-win` and `capture-learning`.
 
 **Adding someone else's plugin:** add a line to `config/plugins.conf`. First, read its `.claude-plugin/plugin.json` and every hook it runs, and check for network calls. Then record the commit you reviewed in a comment above the line.
 
-**Adding a skill of my own:**
+## My skills
 
-1. Create `plugins/iram-skills/skills/<name>/SKILL.md`, with `name` and `description` in its frontmatter.
-2. Check it with `claude plugin validate .`
-3. Bump `version` in `plugins/iram-skills/.claude-plugin/plugin.json`, then commit and push.
-4. On each Mac, run `git pull` in `~/mac-setup`.
+My own skills live in `skills/` and follow the open [Agent Skills](https://agentskills.io/specification) format, so they aren't tied to one tool. The `skills` step links them into `~/.agents/skills/` (read by Codex, Cursor, GitHub Copilot, Gemini CLI and OpenCode) and `~/.claude/skills/` (Claude Code). Because they're symlinks, `git pull` updates every agent at once.
+
+| Skill | Use it when |
+|---|---|
+| `learn-codebase` | Asking how a codebase works, or ramping up on a new repo. Answers from the code with `file:line` references, labels what's observed vs inferred, and suggests the next question to ask. Say "quiz me" to check your understanding |
+| `capture-learning` | Something you learned (architecture, setup steps, gotchas, terms) should go into your Codebase Notes |
+| `log-win` | You finished something worth putting in your Brag Doc |
+
+The skills don't name a specific agent or tool. When one needs to write somewhere (notes, Brag Doc), it uses whatever tool the agent has, or prints the text for you to paste.
+
+**Adding a skill:**
+
+1. Create `skills/<name>/SKILL.md`. Its frontmatter needs `name` (matching the folder) and `description` (what it does and when to use it).
+2. Run `bin/validate-skills`. It checks every skill against the spec with [skills-ref](https://pypi.org/project/skills-ref/), the spec's reference validator. It runs through `uvx` or `pipx` if you have either, so nothing is installed globally.
+3. Re-run `./install.sh --only skills` to link the new skill, then commit and push. CI runs the same validation.
+
+**The edit loop.** For each change to a skill:
+
+1. **Validate:** `bin/validate-skills skills/<name>` catches format mistakes (name, description, frontmatter).
+2. **Try it:** start a fresh session in any agent and ask something that should trigger the skill. Check that it loads, and that it doesn't load for prompts it shouldn't.
+3. **Evaluate:** for skills you rely on, use the `skill-creator` skill (installed with `example-skills`) to write a few test prompts, compare runs with and without the skill, and tune the description so it triggers reliably.
+4. Repeat until it passes, then commit.
+
+**Want a heavier tool for learning a codebase?** [OthmanAdi/codebase-knowledge-builder](https://github.com/OthmanAdi/codebase-knowledge-builder) (third-party, MIT) is a portable Agent Skill that writes a full, source-cited architecture report for a repo. It isn't installed by default. Review it first, then copy its `skills/codebase-knowledge-builder/` folder into `skills/` if you want it.
+
+## CLAUDE.md
+
+`config/CLAUDE.md` is installed to `~/.claude/CLAUDE.md`, which Claude Code reads in every project. It sets how I want answers written (pyramid order: the answer first, then supporting points, then detail), and points to the skills above. Edit it here and re-run `./install.sh --only skills`. Your previous version is backed up as `~/.claude/CLAUDE.md.bak.<timestamp>`.
+
+It's the one Claude-specific file. Other agents read their own user-level instruction files (for example, Codex reads `~/.codex/AGENTS.md`). You can copy it there if you want the same rules in those tools.
 
 ## Updating
 
 ```bash
-cd ~/mac-setup && git pull && ./install.sh
+cd ~/dev-setup && git pull && ./install.sh
 ```
 
 Claude Code installed with Anthropic's installer updates itself. If you installed it with Homebrew, run `brew upgrade claude-code`.
@@ -182,6 +209,6 @@ Claude Code installed with Anthropic's installer updates itself. If you installe
 On every push, `.github/workflows/ci.yml`:
 
 - Lints every script with shellcheck.
-- Checks that the plugin JSON files parse.
+- Validates every skill in `skills/` against the Agent Skills spec (`bin/validate-skills`).
 - Checks that the tmux config loads with no errors.
 - Runs `--dry-run` on a macOS runner and confirms it changed nothing in the home folder.

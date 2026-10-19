@@ -6,6 +6,7 @@ DRY_RUN="${DRY_RUN:-0}"
 ASSUME_YES="${ASSUME_YES:-0}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 RC_FILE="${RC_FILE:-$HOME/.zshrc}"
+# Markers keep the old name so existing ~/.zshrc blocks are still found and replaced.
 BLOCK_BEGIN="# >>> mac-setup >>>"
 BLOCK_END="# <<< mac-setup <<<"
 
@@ -70,4 +71,23 @@ write_rc_block() {
   else
     mv "$tmp" "$RC_FILE"; info "Updated $RC_FILE (backup: $RC_FILE.bak.$STAMP)"
   fi
+}
+
+# Point DEST at SRC with a symlink. If DEST already exists and isn't that link,
+# move it to ~/.dev-setup-backup/<timestamp>/ first (outside any folder an agent
+# scans, so a backed-up skill can't load twice). Never deletes.
+link_path() {
+  local src="$1" dest="$2"
+  if [[ -L "$dest" && "$(readlink "$dest")" == "$src" ]]; then
+    info "Up to date: $dest -> $src"; return 0
+  fi
+  if [[ -e "$dest" || -L "$dest" ]]; then
+    local backup="$HOME/.dev-setup-backup/$STAMP${dest#"$HOME"}"
+    info "Backing up $dest -> $backup"
+    run mkdir -p "$(dirname "$backup")"
+    run mv "$dest" "$backup"
+  fi
+  run mkdir -p "$(dirname "$dest")"
+  run ln -s "$src" "$dest"
+  [[ "$DRY_RUN" == "1" ]] || info "Linked $dest -> $src"
 }

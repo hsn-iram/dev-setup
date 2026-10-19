@@ -1,11 +1,12 @@
 ---
 name: capture-learning
-description: Use when Iram describes code, systems, setup steps, gotchas, terms or open questions at work — files it into the right section of his Codebase Notes instead of a one-off answer.
+description: Files what the user learns at work (code, systems, setup steps, gotchas, terms, open questions) into the right section of their Codebase Notes doc instead of leaving it as a one-off answer. Use when the user describes how something works, hits a gotcha, or asks to note something about a codebase.
+license: MIT
 ---
 
 # Capture a learning in Codebase Notes
 
-Codebase Notes: the user's Codebase Notes doc in Claude Docs. Use the link from the current project or conversation; if there isn't one, ask for it. Never store the link in this repo (it's public), and never copy employer details into it.
+Codebase Notes is the user's running notes doc for the codebase they're learning. Use the link or location from the current project or conversation. If there isn't one, ask for it. Never store the link in this repo (it's public), and never copy employer details into it.
 
 | Section | Goes here |
 | --- | --- |
@@ -19,9 +20,9 @@ Codebase Notes: the user's Codebase Notes doc in Claude Docs. Use the link from 
 
 ## Steps
 
-1. Answer his actual question first, briefly, if he asked one.
+1. If the user asked a question, answer it first, briefly.
 2. Pick the section(s). A gotcha that answers an open question also ticks that question.
-3. If the Claude Docs connector is available, write the note there in that section's existing format, changing only what's needed. If not, output the note formatted for that section so he can paste it.
+3. If a tool that can edit the notes doc is available, write the note there in that section's existing format, changing only what's needed. If not, output the note formatted for that section so the user can paste it.
 4. Write for the next hire: concrete commands, paths, names. Never include secrets; say where they live.
 5. With 3+ components and their connections known, offer to draw or redraw the architecture sketch.
 6. Reply in one line: what was filed where. If the same gotcha has bitten 2+ people, flag it as shared pain worth fixing.

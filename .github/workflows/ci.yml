@@ -11,11 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: shellcheck
-        run: shellcheck -x install.sh lib/common.sh steps/*.sh bin/tclaude
-      - name: JSON manifests parse
-        run: |
-          python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
-          python3 -m json.tool plugins/iram-skills/.claude-plugin/plugin.json > /dev/null
+        run: shellcheck -x install.sh lib/common.sh steps/*.sh bin/tclaude bin/validate-skills
       - name: tmux config loads cleanly
         run: |
           sudo apt-get install -y -qq tmux
@@ -23,6 +19,18 @@ jobs:
           out="$(tmux -L ci source-file tmux/tmux.conf 2>&1)"; echo "$out"
           tmux -L ci kill-server
           test -z "$out"
+
+  skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install skills-ref (Agent Skills reference validator)
+        run: pip install skills-ref==0.1.1
+      - name: Validate every skill against the Agent Skills spec
+        run: bin/validate-skills
 
   macos-dry-run:
     runs-on: macos-latest

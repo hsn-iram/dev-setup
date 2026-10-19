@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# validate-skills [skill-dir ...]: check skills against the Agent Skills spec
+# with skills-ref, the spec's reference validator (https://agentskills.io).
+# With no arguments, checks every skill in skills/. Exits non-zero on failure.
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SKILLS_REF_VERSION="0.1.1"
+
+if command -v agentskills >/dev/null 2>&1; then
+  validator=(agentskills)
+elif command -v uvx >/dev/null 2>&1; then
+  validator=(uvx --quiet --from "skills-ref==$SKILLS_REF_VERSION" agentskills)
+elif command -v pipx >/dev/null 2>&1; then
+  validator=(pipx run --spec "skills-ref==$SKILLS_REF_VERSION" agentskills)
+else
+  echo "Needs skills-ref. Install one of:" >&2
+  echo "  brew install uv            (then re-run; uses uvx, nothing installed globally)" >&2
+  echo "  pipx install skills-ref==$SKILLS_REF_VERSION" >&2
+  exit 2
+fi
+
+if [[ $# -gt 0 ]]; then
+  skills=("$@")
+else
+  skills=()
+  for d in "$REPO_DIR"/skills/*/; do skills+=("${d%/}"); done
+fi
+
+failed=0
+for skill in "${skills[@]}"; do
+  "${validator[@]}" validate "$skill" || failed=1
+  lines="$(wc -l < "$skill/SKILL.md")"
+  if (( lines > 500 )); then
+    echo "Warning: $skill/SKILL.md is $lines lines; the spec recommends under 500." >&2
+  fi
+done
+exit "$failed"

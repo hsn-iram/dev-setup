@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# mac-setup: set up a Mac for Claude Code, its plugins, tmux and Cursor.
+# dev-setup: set up a Mac for Claude Code, its plugins, agent skills, tmux and Cursor.
 # Run ./install.sh --help for options. Safe to re-run.
 set -euo pipefail
 
@@ -8,7 +8,7 @@ export REPO_DIR
 # shellcheck source=lib/common.sh
 source "$REPO_DIR/lib/common.sh"
 
-ALL_STEPS=(preflight claude plugins tmux cursor)
+ALL_STEPS=(preflight claude plugins skills tmux cursor)
 ONLY=""; SKIP=""
 CLAUDE_VIA="${CLAUDE_VIA:-native}"
 
@@ -28,6 +28,7 @@ Steps:
   preflight  Checks: macOS, not root, Homebrew, company-managed Claude settings.
   claude     Installs Claude Code; puts ~/.local/bin on PATH in ~/.zshrc.
   plugins    Installs the plugins listed in config/plugins.conf.
+  skills     Links skills/ into ~/.agents/skills and ~/.claude/skills; installs ~/.claude/CLAUDE.md.
   tmux       Installs tmux (Homebrew), ~/.tmux.conf, and the tclaude helper.
   cursor     Installs Cursor (Homebrew) and the Claude Code extension.
 EOF

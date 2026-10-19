@@ -36,12 +36,20 @@ confirm() {
 }
 
 # Copy SRC to DEST. If DEST exists and differs, back it up first. Never deletes.
+# If DEST is a symlink (e.g. managed by a dotfiles repo), leave it alone and say so:
+# writing through it would overwrite the file it points to.
 install_file() {
   local src="$1" dest="$2" mode="${3:-644}"
+  if [[ -L "$dest" ]]; then
+    if cmp -s "$src" "$dest"; then info "Up to date: $dest"; return 0; fi
+    warn "Skipping $dest: it's a symlink to $(readlink "$dest"), so another tool manages it."
+    info "To use this repo's version, merge $src into the file it points to."
+    return 0
+  fi
   if [[ -e "$dest" ]] && cmp -s "$src" "$dest"; then
     info "Up to date: $dest"; return 0
   fi
-  if [[ -e "$dest" || -L "$dest" ]]; then
+  if [[ -e "$dest" ]]; then
     info "Backing up $dest -> $dest.bak.$STAMP"
     run cp -p "$dest" "$dest.bak.$STAMP"
   fi
@@ -53,8 +61,22 @@ install_file() {
 
 # Replace (or append) this tool's marked block in the shell rc file.
 # Lines outside the markers are never touched. Backs up the rc file first.
+# Skips a symlinked rc file (dotfiles repo) and stops on a damaged block.
 write_rc_block() {
-  local body="$1" tmp
+  local body="$1" tmp begins=0 ends=0
+  if [[ -L "$RC_FILE" ]]; then
+    warn "Skipping $RC_FILE: it's a symlink to $(readlink "$RC_FILE"), so another tool manages it."
+    info "Add these lines to it yourself:"; printf '      %s\n' "$body"
+    return 0
+  fi
+  if [[ -f "$RC_FILE" ]]; then
+    begins="$(grep -cxF -- "$BLOCK_BEGIN" "$RC_FILE" || true)"
+    ends="$(grep -cxF -- "$BLOCK_END" "$RC_FILE" || true)"
+    if [[ "$begins" != "$ends" || "$begins" -gt 1 ]] || \
+       { [[ "$begins" == 1 ]] && (( $(grep -nxF -- "$BLOCK_BEGIN" "$RC_FILE" | cut -d: -f1) > $(grep -nxF -- "$BLOCK_END" "$RC_FILE" | cut -d: -f1) )); }; then
+      die "$RC_FILE has a damaged '$BLOCK_BEGIN' block (markers missing or out of order). Fix it by hand, then re-run."
+    fi
+  fi
   tmp="$(mktemp)"
   if [[ -f "$RC_FILE" ]]; then
     awk -v b="$BLOCK_BEGIN" -v e="$BLOCK_END" '
@@ -67,10 +89,12 @@ write_rc_block() {
   fi
   [[ -f "$RC_FILE" ]] && run cp -p "$RC_FILE" "$RC_FILE.bak.$STAMP"
   if [[ "$DRY_RUN" == "1" ]]; then
-    info "[dry-run] would write this block to $RC_FILE:"; printf '      %s\n' "$body"; rm -f "$tmp"
+    info "[dry-run] would write this block to $RC_FILE:"; printf '      %s\n' "$body"
   else
-    mv "$tmp" "$RC_FILE"; info "Updated $RC_FILE (backup: $RC_FILE.bak.$STAMP)"
+    # Write in place (not mv) so the file keeps its permissions and owner.
+    cat "$tmp" > "$RC_FILE"; info "Updated $RC_FILE (backup: $RC_FILE.bak.$STAMP)"
   fi
+  rm -f "$tmp"
 }
 
 # Point DEST at SRC with a symlink. If DEST already exists and isn't that link,
@@ -90,4 +114,23 @@ link_path() {
   run mkdir -p "$(dirname "$dest")"
   run ln -s "$src" "$dest"
   [[ "$DRY_RUN" == "1" ]] || info "Linked $dest -> $src"
+}
+
+# Remove symlinks in DIR that point into PREFIX and are broken or not wanted.
+# Only touches links this tool made (target under PREFIX); never real files.
+#   prune_links DIR PREFIX [keep-name ...]
+prune_links() {
+  local dir="$1" prefix="$2" link name keep k
+  shift 2
+  [[ -d "$dir" ]] || return 0
+  for link in "$dir"/*; do
+    [[ -L "$link" ]] || continue
+    [[ "$(readlink "$link")" == "$prefix"/* ]] || continue
+    name="$(basename "$link")"; keep=0
+    for k in "$@"; do [[ "$k" == "$name" ]] && keep=1; done
+    if [[ ! -e "$link" || "$keep" == 0 ]]; then
+      info "Removing old link $link"
+      run rm "$link"
+    fi
+  done
 }

@@ -1,6 +1,6 @@
 # dev-setup
 
-My Mac dev setup, in one re-runnable script. It installs Claude Code and a set of plugins, links my own agent skills (usable from any agent that supports [Agent Skills](https://agentskills.io)), installs my user-level `CLAUDE.md`, configures tmux for Claude Code, and installs Cursor with the Claude Code extension.
+My Mac dev setup, in one re-runnable script. It installs Claude Code and a set of plugins, links my own agent skills (usable from any agent that supports [Agent Skills](https://agentskills.io)), installs my personal Claude Code rules (`config/CLAUDE.md`), configures tmux for Claude Code, and installs Cursor with the Claude Code extension.
 
 It's built to be safe on a work laptop:
 
@@ -106,7 +106,7 @@ A browser opens for login. On a work Mac, use the account your company approved.
 claude --version          # Claude Code is installed
 claude plugin list        # the plugins from config/plugins.conf
 tmux -V                   # tmux is installed
-ls -l ~/.agents/skills ~/.claude/skills   # links to this repo's skills/
+ls -l ~/.claude/skills    # links to this repo's skills/
 tclaude ~/dev-setup       # tmux session: Claude Code left, shell right (Ctrl+b then d to leave)
 ```
 
@@ -127,10 +127,10 @@ In Cursor, open the Extensions view (Cmd+Shift+X) and check that **Claude Code**
 
 | Step | Changes | Undo |
 |---|---|---|
-| `preflight` | Nothing. Checks you're on macOS and not running as root, finds Homebrew, and flags company-managed settings or a stray `ANTHROPIC_API_KEY` | — |
+| `preflight` | Nothing. Checks you're on macOS and not running as root, finds Homebrew, and flags company-managed settings or a stray `ANTHROPIC_API_KEY` | Nothing to undo |
 | `claude` | Installs Claude Code with [Anthropic's official installer](https://code.claude.com/docs/en/setup) to `~/.local/bin`. Adds a marked PATH block to `~/.zshrc` | Delete the block between the `mac-setup` markers in `~/.zshrc` |
 | `plugins` | Installs the plugins in `config/plugins.conf` for your user. Turns i-have-adhd on for every session and sets caveman to off by default | `claude plugin uninstall <name>`; `rm ~/.claude/.i-have-adhd-always ~/.config/caveman/config.json` |
-| `skills` | Symlinks each folder in `skills/` into `~/.agents/skills/` and `~/.claude/skills/`, and copies `config/CLAUDE.md` to `~/.claude/CLAUDE.md`. Anything already at those paths is moved to `~/.dev-setup-backup/<timestamp>/` first | Delete the symlinks; restore from `~/.dev-setup-backup/` or `~/.claude/CLAUDE.md.bak.<timestamp>` |
+| `skills` | Symlinks each folder in `skills/` into `~/.claude/skills/` (and `~/.agents/skills/` if Codex or Gemini CLI is installed), removes links it made earlier that are broken or no longer wanted, and copies `config/CLAUDE.md` to `~/.claude/rules/dev-setup.md`. Anything already at a link's path is moved to `~/.dev-setup-backup/<timestamp>/` first. Never touches your own `~/.claude/CLAUDE.md` | Delete the symlinks and `~/.claude/rules/dev-setup.md`; restore from `~/.dev-setup-backup/` |
 | `tmux` | Runs `brew install tmux`, writes `~/.tmux.conf`, and installs the `tclaude` helper to `~/.local/bin` | Restore `~/.tmux.conf.bak.<timestamp>` |
 | `cursor` | After asking, runs `brew install --cask cursor`, then adds the Claude Code extension (`anthropic.claude-code`). Doesn't touch Cursor's settings | Uninstall it from Cursor's Extensions view |
 
@@ -139,7 +139,8 @@ Before replacing any file, the script saves the old version as `<file>.bak.<time
 ## Safety and company policy
 
 - **Company-managed settings win.** If IT has deployed Claude Code settings (`/Library/Application Support/ClaudeCode/managed-settings.json`), the script says so, and those settings override anything it configures. If a step is blocked, that's the policy working; don't work around it.
-- **Third-party plugins.** Anything not from Anthropic or this repo is labeled `third-party` in `config/plugins.conf`, and the script asks before installing it. Plugins can run commands (hooks), so each one has a review note recording the commit that was checked.
+- **Third-party plugins.** Anything not from Anthropic or this repo is labeled `third-party` in `config/plugins.conf`, and the script asks before installing it. Plugins can run commands (hooks), so each one is **pinned** to the exact commit that was reviewed, in `.claude-plugin/marketplace.json`. Re-running the setup never moves a pin. To update a plugin, review the new commit, then change its `sha` there.
+- **Dotfiles managers.** If `~/.zshrc` or `~/.tmux.conf` is a symlink (for example into a dotfiles repo), the script leaves it alone and tells you what to add yourself.
 - **No secrets in this repo.** Never commit API keys, tokens, or anything from an employer (code, data, internal names or URLs). `.gitignore` covers the common cases. This repo goes with me between jobs.
 
 ## tmux
@@ -161,17 +162,18 @@ The config is a standard set plus the three lines from [Claude Code's tmux guide
 - **`i-have-adhd`** ([ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd), third-party, MIT): shapes Claude's replies to lead with the next action. It's on for every session and needs Node for that.
 - **`caveman`** ([JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman), third-party, Apache-2.0): makes Claude's replies terse. Type `/caveman` (or `/caveman ultra`) to turn it on in a session. It's off by default so it doesn't clash with i-have-adhd. Its hooks need Node.
 
-**Adding someone else's plugin:** add a line to `config/plugins.conf`. First, read its `.claude-plugin/plugin.json` and every hook it runs, and check for network calls. Then record the commit you reviewed in a comment above the line.
+**Adding someone else's plugin:** first read its `.claude-plugin/plugin.json` and every hook it runs, and check for network calls. Then pin the commit you reviewed (all 40 characters) as an entry in `.claude-plugin/marketplace.json`, add a `local | dev-setup | <plugin> | third-party` line to `config/plugins.conf` with a review note above it, and check the result with `claude plugin validate .`
 
 ## My skills
 
-My own skills live in `skills/` and follow the open [Agent Skills](https://agentskills.io/specification) format, so they aren't tied to one tool. The `skills` step links them into `~/.agents/skills/` (read by Codex, Cursor, GitHub Copilot, Gemini CLI and OpenCode) and `~/.claude/skills/` (Claude Code). Because they're symlinks, `git pull` updates every agent at once.
+My own skills live in `skills/` and follow the open [Agent Skills](https://agentskills.io/specification) format, so they aren't tied to one tool. The `skills` step links them into `~/.claude/skills/`, which Claude Code, Cursor, Copilot in VS Code and OpenCode all read. Codex and Gemini CLI read `~/.agents/skills/` instead, so the step links there too when either is installed. (Cursor then lists each skill twice, which is why it isn't the default.) To choose the folders yourself, set `SKILL_DIRS`, for example `SKILL_DIRS="$HOME/.agents/skills" ./install.sh --only skills`. Because they're symlinks, `git pull` updates every agent at once.
 
 | Skill | Use it when |
 |---|---|
 | `learn-codebase` | Asking how a codebase works, or ramping up on a new repo. Answers from the code with `file:line` references, labels what's observed vs inferred, and suggests the next question to ask. Say "quiz me" to check your understanding |
 | `capture-learning` | Something you learned (architecture, setup steps, gotchas, terms) should go into your Codebase Notes |
 | `log-win` | You finished something worth putting in your Brag Doc |
+| `iram-tone` | Polishing a Slack message (status update, ask for help, pushback, announcement, bad news, thanks). Rewrites it point-first and impact-focused, keeps your facts, and marks anything missing as a `[placeholder]` |
 
 The skills don't name a specific agent or tool. When one needs to write somewhere (notes, Brag Doc), it uses whatever tool the agent has, or prints the text for you to paste.
 
@@ -192,9 +194,11 @@ The skills don't name a specific agent or tool. When one needs to write somewher
 
 ## CLAUDE.md
 
-`config/CLAUDE.md` is installed to `~/.claude/CLAUDE.md`, which Claude Code reads in every project. It sets how I want answers written (pyramid order: the answer first, then supporting points, then detail), and points to the skills above. Edit it here and re-run `./install.sh --only skills`. Your previous version is backed up as `~/.claude/CLAUDE.md.bak.<timestamp>`.
+`config/CLAUDE.md` holds my personal rules for Claude Code: pyramid-ordered answers, no em dashes, sounding human in anything I send, reproduce-first debugging, realistic end-to-end verification, and a `Confidence: NN%` line at the end of every review. It's deliberately short.
 
-It's the one Claude-specific file. Other agents read their own user-level instruction files (for example, Codex reads `~/.codex/AGENTS.md`). You can copy it there if you want the same rules in those tools.
+It's installed as `~/.claude/rules/dev-setup.md`. Claude Code loads every file in `~/.claude/rules/` in every project, next to `~/.claude/CLAUDE.md`, so your own `~/.claude/CLAUDE.md` stays yours: re-running the setup never overwrites it. Edit the rules here and re-run `./install.sh --only skills`.
+
+It's the one Claude-specific file. Other agents read their own instruction files (for example, Codex reads `~/.codex/AGENTS.md`). Copy it there if you want the same rules in those tools.
 
 ## Updating
 
@@ -208,7 +212,9 @@ Claude Code installed with Anthropic's installer updates itself. If you installe
 
 On every push, `.github/workflows/ci.yml`:
 
-- Lints every script with shellcheck.
+- Lints every script with shellcheck, and checks that the tmux config loads with no errors.
 - Validates every skill in `skills/` against the Agent Skills spec (`bin/validate-skills`).
-- Checks that the tmux config loads with no errors.
-- Runs `--dry-run` on a macOS runner and confirms it changed nothing in the home folder.
+- Runs `tests/run.sh` on Ubuntu and macOS (macOS still ships bash 3.2). The tests use a throwaway home folder and cover dry runs, real installs, re-runs, symlinked dotfiles, damaged `~/.zshrc` blocks, stale links and the plugin pins. Run them yourself with `tests/run.sh`.
+- Scans the full git history for committed secrets with gitleaks.
+
+Every GitHub Action is pinned to a full commit SHA.

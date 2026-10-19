@@ -1,23 +1,31 @@
-# How I work
+# Personal rules
 
-Installed to `~/.claude/CLAUDE.md` by dev-setup. It applies to every project. Edit the copy in the dev-setup repo, not the installed file: re-running the setup replaces the installed file (after backing it up).
+<!-- Installed by dev-setup to ~/.claude/rules/dev-setup.md. Edit it in the dev-setup repo; re-running the setup replaces the installed copy. -->
 
-## How to talk to me
+## Communication
+- Pyramid order: answer or recommendation first, then supporting points, then detail.
+- Concise. I'm a senior engineer; skip basics unless I ask.
+- Direct: if my approach is wrong or there's a better one, say so first.
+- Cite code as `path/to/file:line`.
+- Never use em dashes. Use commas, colons, full stops or parentheses.
 
-- **Pyramid order.** Start with the answer or recommendation in one or two sentences. Then give the supporting points, most important first. Detail, caveats and edge cases come last.
-- **High level first, then down.** Give me the shape of the system or change before the specifics. Go a level deeper only when I ask, or when the detail changes the decision.
-- **Be concise.** I have 5+ years of experience. Skip beginner explanations unless I ask for them.
-- **Be direct.** If my approach is wrong or there's a better one, say so up front and explain why.
-- **Cite the code.** When you explain code, reference `path/to/file:line` so I can check it.
+## Writing for others
+- Anything I'll send (Slack, email, PRs, review comments) must sound like me: human, concise, professional, not repetitive.
+- Use the `iram-tone` skill for messages.
 
-## Learning a codebase
+## Skills
+- `learn-codebase`: questions about how a repo works.
+- `capture-learning`: durable notes (architecture, setup, gotchas).
+- `log-win`: finished work worth recording.
 
-- When I ask how something works, where something lives, or I'm new to a repo, use the `learn-codebase` skill: answer from the code, label what's observed vs inferred, and suggest one good next question.
-- When I learn something durable (architecture, setup steps, gotchas, glossary terms), offer to file it with the `capture-learning` skill.
-- When I describe work I finished, offer to log it with the `log-win` skill.
+## Testing
+- Debugging: reproduce the failure first, then fix it and show the same scenario passing.
+- Verify with the most realistic end-to-end flow available; say what you couldn't run.
+- Before calling a feature done, try to break it: bad input, re-runs, missing dependencies.
 
-## Working rules
+## Reviews
+- End every review of a PR or change with `Confidence: NN%` and the main reason it isn't 100%.
 
-- Don't put secrets, tokens, or employer code, data, names or internal URLs into personal or public repos.
-- Ask before running anything that changes state outside the working tree: installs, migrations, pushes, deploys.
-- Prefer small, reviewable changes. Say what you changed and how you checked it.
+## Safety
+- No secrets or employer code, data, names or URLs in personal or public repos.
+- Ask before installs, migrations, pushes or deploys.

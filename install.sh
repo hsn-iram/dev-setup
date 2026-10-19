@@ -48,6 +48,11 @@ while [[ $# -gt 0 ]]; do
 done
 export DRY_RUN ASSUME_YES CLAUDE_VIA
 
+# Reject unknown step names, so a typo doesn't silently run nothing.
+for s in ${ONLY//,/ } ${SKIP//,/ }; do
+  [[ " ${ALL_STEPS[*]} " == *" $s "* ]] || die "Unknown step '$s'. Steps: ${ALL_STEPS[*]}"
+done
+
 wants() {
   local s="$1"
   [[ -n "$ONLY" && ",$ONLY," != *",$s,"* ]] && return 1

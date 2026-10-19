@@ -1,0 +1,25 @@
+{
+  "name": "dev-setup",
+  "owner": { "name": "hsn-iram" },
+  "description": "Third-party Claude Code plugins pinned to the exact commits reviewed for dev-setup. To update one, review the new commit, then change its sha here.",
+  "plugins": [
+    {
+      "name": "i-have-adhd",
+      "description": "ayghri/i-have-adhd (MIT), pinned to the reviewed commit.",
+      "source": {
+        "source": "github",
+        "repo": "ayghri/i-have-adhd",
+        "sha": "1ecea1993b7fce257ffbd686c070948b5e07eda6"
+      }
+    },
+    {
+      "name": "caveman",
+      "description": "JuliusBrussee/caveman (Apache-2.0), pinned to the reviewed commit.",
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman",
+        "sha": "bad48a0e1df55e05e3f52249afa35ecc1909ee76"
+      }
+    }
+  ]
+}

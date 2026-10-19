@@ -13,6 +13,7 @@ fi
 has_marketplace() { [[ "$DRY_RUN" != "1" ]] && claude plugin marketplace list 2>/dev/null | grep -q -- "$1"; }
 has_plugin()      { [[ "$DRY_RUN" != "1" ]] && claude plugin list 2>/dev/null | grep -q -- "$1@$2"; }
 
+seen_markets=""
 trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; printf '%s' "${s%"${s##*[![:space:]]}"}"; }
 
 while IFS="|" read -r -u 3 src market plugin trust; do
@@ -26,21 +27,39 @@ while IFS="|" read -r -u 3 src market plugin trust; do
     confirm "Install $plugin?" || { info "Skipped $plugin"; continue; }
   fi
 
-  if has_marketplace "$market"; then
-    run claude plugin marketplace update "$market" || warn "Couldn't update marketplace $market"
-  else
-    run claude plugin marketplace add "$src" || { warn "Couldn't add marketplace $src (blocked by policy?)"; continue; }
+  # Add or refresh each marketplace once per run, even if it lists several plugins.
+  if [[ " $seen_markets " != *" $market "* ]]; then
+    seen_markets="$seen_markets $market"
+    if has_marketplace "$market"; then
+      run claude plugin marketplace update "$market" || warn "Couldn't update marketplace $market"
+    else
+      run claude plugin marketplace add "$src" || { warn "Couldn't add marketplace $src (blocked by policy?)"; continue; }
+    fi
   fi
 
   if has_plugin "$plugin" "$market"; then
-    info "Already installed: $plugin@$market"
+    if [[ "$src" == "$REPO_DIR" ]]; then
+      # Pinned in this repo: move to the pinned commit if the pin changed.
+      run claude plugin update "$plugin@$market" || warn "Couldn't update $plugin@$market"
+    else
+      info "Already installed: $plugin@$market"
+    fi
   else
     run claude plugin install "$plugin@$market" --scope user || warn "Couldn't install $plugin@$market"
   fi
 done 3< "$REPO_DIR/config/plugins.conf"
 
+# Earlier versions installed the third-party plugins straight from their own
+# (unpinned) marketplaces. Two copies would both run their hooks.
+for old in i-have-adhd@i-have-adhd caveman@caveman; do
+  if has_plugin "${old%@*}" "${old#*@}"; then
+    warn "Unpinned copy still installed: $old. It updates to whatever its author pushes."
+    info "Remove it with: claude plugin uninstall $old && claude plugin marketplace remove ${old#*@}"
+  fi
+done
+
 # i-have-adhd: turn it on for every session unless ADHD_ALWAYS_ON=0.
-if has_plugin i-have-adhd i-have-adhd || [[ "$DRY_RUN" == "1" ]]; then
+if has_plugin i-have-adhd dev-setup || [[ "$DRY_RUN" == "1" ]]; then
   if [[ "${ADHD_ALWAYS_ON:-1}" == "1" ]]; then
     run mkdir -p "$HOME/.claude"
     run touch "$HOME/.claude/.i-have-adhd-always"
@@ -53,7 +72,7 @@ fi
 # always-on style. Default it to off (turn on per session with /caveman) unless
 # CAVEMAN_ALWAYS_ON=1. An existing caveman config is never overwritten.
 CAVEMAN_CFG="${XDG_CONFIG_HOME:-$HOME/.config}/caveman/config.json"
-if has_plugin caveman caveman || [[ "$DRY_RUN" == "1" ]]; then
+if has_plugin caveman dev-setup || [[ "$DRY_RUN" == "1" ]]; then
   if [[ "${CAVEMAN_ALWAYS_ON:-0}" == "1" ]]; then
     info "caveman stays on for every session (CAVEMAN_ALWAYS_ON=1)."
   elif [[ -f "$CAVEMAN_CFG" ]]; then

@@ -6,7 +6,7 @@ license: MIT
 
 # Capture a learning in Codebase Notes
 
-Codebase Notes is the user's running notes doc for the codebase they're learning. Use the link or location from the current project or conversation. If there isn't one, ask for it. Never store the link in this repo (it's public), and never copy employer details into it.
+Codebase Notes is the user's running notes doc for the codebase they're learning. Use the link or location from the current project or conversation. If there isn't one, ask for it. Never write the link, or any employer details, into the dev-setup repo or any other public repo.
 
 | Section | Goes here |
 | --- | --- |

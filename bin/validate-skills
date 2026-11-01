@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # validate-skills [skill-dir ...]: check skills against the Agent Skills spec
 # with skills-ref, the spec's reference validator (https://agentskills.io).
-# With no arguments, checks every skill in skills/. Exits non-zero on failure.
+# With no arguments, checks every skill in agents/skills/. Exits non-zero on failure.
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -24,7 +24,7 @@ if [[ $# -gt 0 ]]; then
   skills=("$@")
 else
   skills=()
-  for d in "$REPO_DIR"/skills/*/; do skills+=("${d%/}"); done
+  for d in "$REPO_DIR"/agents/skills/*/; do skills+=("${d%/}"); done
 fi
 
 failed=0

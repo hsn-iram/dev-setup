@@ -8,8 +8,7 @@ if [[ "$(uname)" != "Darwin" ]]; then
   warn "Not macOS: continuing because ALLOW_NON_MAC=1"
 fi
 
-# Homebrew is optional. We never install it: on a work Mac, IT may manage
-# software another way (e.g. a self-service app). Ask IT before installing it.
+# Put Homebrew on PATH if it's installed but this shell doesn't know about it yet.
 if ! has brew; then
   for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
     [[ -x "$b" ]] && eval "$("$b" shellenv)" && break
@@ -18,8 +17,7 @@ fi
 if has brew; then
   info "Homebrew: $(brew --version | head -1)"
 else
-  warn "Homebrew not found. tmux and Cursor won't be installed (the tmux config still will be)."
-  info "If your company allows Homebrew, see https://brew.sh, then re-run this script."
+  info "Homebrew isn't installed. Programs need it (make homebrew); config and agent steps don't."
 fi
 
 has git || warn "git not found. Run: xcode-select --install"

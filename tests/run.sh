@@ -42,6 +42,13 @@ check "naming claude-code does run it" 'grep -qE "==> Claude Code([^ ]|$)" <<< "
 out="$(install --dry-run tmux-config)"
 check "tmux-config writes config without installing tmux" 'grep -q "tmux config" <<< "$out" && ! grep -q "brew install tmux" <<< "$out"'
 
+# 2b1. An app that's already on the Mac isn't installed again.
+fresh_home
+mkdir -p "$HOME/Applications/WezTerm.app"
+out="$(install --dry-run wezterm)"
+check "an app already in ~/Applications isn't installed again" 'grep -q "already installed: $HOME/Applications/WezTerm.app" <<< "$out" && ! grep -q "brew install --cask wezterm" <<< "$out"'
+rm -rf "$HOME/Applications"
+
 # 2b2. wezterm-config links the config into the repo; tmux-config installs the cheat sheet.
 fresh_home
 install wezterm-config tmux-config >/dev/null

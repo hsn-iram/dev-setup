@@ -10,7 +10,7 @@ One folder per program. `make <program>` runs its `install.sh`, then its `config
 | `tenv` | tenv, which provides `terraform` and `tofu` | `TENV_AUTO_INSTALL=true`: each repo's pinned version installs on first use |
 | `claude-code` | Claude Code, with [Anthropic's installer](https://code.claude.com/docs/en/setup) | Puts `~/.local/bin` on PATH |
 | `tmux` | tmux | `~/.tmux.conf`, the `tclaude` helper and the cheat sheet (`Ctrl+b ?`) |
-| `wezterm` | WezTerm and JetBrains Mono Nerd Font | Links `~/.config/wezterm/wezterm.lua` to this repo. Opens straight into tmux |
+| `wezterm` | WezTerm | Links `~/.config/wezterm/wezterm.lua` to this repo. Opens straight into tmux |
 | `cursor` | Cursor | The Claude Code extension, if Claude Code is installed |
 
 Every change to `~/.zshrc` goes in a marked block (`# >>> dev-setup <name> >>>`). To undo one, delete its block. Replaced files are saved as `<file>.bak.<timestamp>`.

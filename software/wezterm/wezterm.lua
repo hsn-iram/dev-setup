@@ -9,7 +9,8 @@ local act = wezterm.action
 local config = wezterm.config_builder()
 
 -- --- Look ---------------------------------------------------------------------
-config.font = wezterm.font_with_fallback { 'JetBrainsMono Nerd Font', 'JetBrains Mono' }
+-- Bundled with WezTerm, along with Nerd Font symbols as a fallback, so nothing to install.
+config.font = wezterm.font 'JetBrains Mono'
 config.font_size = 14
 config.color_scheme = 'Catppuccin Mocha'
 config.window_padding = { left = 8, right = 8, top = 6, bottom = 2 }

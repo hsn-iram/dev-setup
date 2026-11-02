@@ -2,7 +2,8 @@
 say "Starship"
 
 if has starship; then
-  info "Already installed: $(starship --version | head -1)"
+  # Not starship --version: it creates ~/.cache/starship, even in a dry run.
+  info "Already installed: $(command -v starship)"
 else
   brew_install starship
 fi

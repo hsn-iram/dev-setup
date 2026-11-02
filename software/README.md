@@ -9,7 +9,7 @@ One folder per program. `make <program>` runs its `install.sh`, then its `config
 | `node` | fnm, then Node LTS as the default (npm and npx come with it) | Loads fnm in `~/.zshrc`, so Node switches to each repo's version on `cd` |
 | `tenv` | tenv, which provides `terraform` and `tofu` | `TENV_AUTO_INSTALL=true`: each repo's pinned version installs on first use |
 | `claude-code` | Claude Code, with [Anthropic's installer](https://code.claude.com/docs/en/setup) | Puts `~/.local/bin` on PATH |
-| `tmux` | tmux | `~/.tmux.conf`, the `tclaude` helper and the cheat sheet (`Ctrl+b ?`) |
+| `tmux` | tmux | `~/.tmux.conf`, the cheat sheet (`Ctrl+b ?`), and the `tclaude` helper if Claude Code is installed |
 | `wezterm` | WezTerm | Links `~/.config/wezterm/wezterm.lua` to this repo. Opens straight into tmux |
 | `starship` | [Starship](https://starship.rs), the prompt | Folder, git branch and status, slow-command time; `❯` turns red after an error. Links `~/.config/starship.toml` |
 | `zsh-plugins` | zsh-autosuggestions and zsh-syntax-highlighting | Grey suggestions from history (`→` accepts one), and commands turn green or red as you type |

@@ -65,6 +65,15 @@ check "tmux-config installs the cheat sheet prefix ? opens" '[[ -f "$HOME/.confi
 out="$(install wezterm-config)"
 check "wezterm-config re-run is a no-op" 'grep -q "Up to date: $HOME/.config/wezterm/wezterm.lua" <<< "$out"'
 
+# 2b4. tclaude only goes where Claude Code is installed.
+fresh_home
+no_claude_path="$(tr ':' '\n' <<< "$PATH" | while read -r d; do [[ -x "$d/claude" ]] || printf '%s:' "$d"; done)"
+PATH="${no_claude_path%:}" install tmux-config >/dev/null
+check "tmux-config skips tclaude without Claude Code" '[[ ! -e "$HOME/.local/bin/tclaude" ]]'
+mkdir -p "$HOME/fake-bin" && printf '#!/bin/sh\n' > "$HOME/fake-bin/claude" && chmod +x "$HOME/fake-bin/claude"
+PATH="$HOME/fake-bin:$PATH" install tmux-config >/dev/null
+check "tmux-config installs tclaude with Claude Code" '[[ -x "$HOME/.local/bin/tclaude" ]]'
+
 # 2c. The approved list: created with everything commented out, then read by --approved.
 fresh_home
 check "--approved without a list fails" '! install --approved >/dev/null'

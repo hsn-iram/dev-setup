@@ -1,32 +1,20 @@
 # agents/
 
-AI agent setup. Nothing here installs a program. `make agents` runs all three steps.
+Agent setup. Nothing here installs a program. Pick targets for the agents this laptop is approved for.
 
-| Target | Does | Undo |
+| Target | For | Does |
 |---|---|---|
-| `plugins` | Installs the Claude Code plugins in `plugins/plugins.conf`. Skipped if Claude Code isn't installed | `claude plugin uninstall <name>` |
-| `skills` | Symlinks each folder in `skills/` into `~/.claude/skills/` | Delete the links |
-| `rules` | Copies `rules/CLAUDE.md` to `~/.claude/rules/dev-setup.md`. Your own `~/.claude/CLAUDE.md` is never touched | Delete that file |
+| `skills` | Every agent | Links my skills (folders here) and the pinned public skills in `skills/public.conf` into each agent's skills folder |
+| `claude-plugins` | Claude Code | Installs the plugins in `claude-plugins/plugins.conf`. Empty for now; it's for things that need Claude Code itself, like hooks |
+| `claude-rules` | Claude Code | Installs `claude-rules/CLAUDE.md` as `~/.claude/rules/dev-setup.md`, and turns i-have-adhd on for every session (`ADHD_ALWAYS_ON=0` skips it) |
 
-## Plugins
-
-| Plugin | From | Notes |
-|---|---|---|
-| `document-skills`, `example-skills` | Anthropic | Office and PDF skills, skill-creator |
-| `i-have-adhd` | [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) | On for every session. Turn it off with `ADHD_ALWAYS_ON=0` |
-| `caveman` | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) | Off by default. Type `/caveman` to turn it on |
-
-Third-party plugins can run commands, so the installer asks before installing each one, and each is pinned to a reviewed commit in `.claude-plugin/marketplace.json`.
-
-**To add a third-party plugin:**
-
-1. Read its `.claude-plugin/plugin.json` and every hook it runs. Check for network calls.
-2. Pin the reviewed commit (all 40 characters) in `.claude-plugin/marketplace.json`.
-3. Add a `local | dev-setup | <plugin> | third-party` line to `plugins/plugins.conf`, with a review note.
+Run `skills` before `claude-rules`; i-have-adhd's always-on rule comes from the downloaded skill. In one command (`make skills claude-rules`), the order is handled for you.
 
 ## Skills
 
-These use the open [Agent Skills](https://agentskills.io) format, so Claude Code, Cursor, Copilot and OpenCode all load them. Because they're symlinks, `git pull` updates every agent.
+Skills use the open [Agent Skills](https://agentskills.io) format. `~/.claude/skills/` is read by Claude Code, Cursor, Copilot and OpenCode. If Codex or Gemini CLI is installed, skills are also linked into `~/.agents/skills/`.
+
+**Mine:**
 
 | Skill | Use it when |
 |---|---|
@@ -35,12 +23,20 @@ These use the open [Agent Skills](https://agentskills.io) format, so Claude Code
 | `log-win` | You finished something worth adding to your Brag Doc |
 | `iram-tone` | You're polishing a Slack message |
 
-**To add a skill:**
+**Public** (`skills/public.conf`, each pinned to a commit): `i-have-adhd`, `caveman` (type `/caveman` for terse replies), and Anthropic's `docx`, `xlsx`, `pptx`, `pdf` and `skill-creator`. They're downloaded to `~/.local/share/dev-setup/public-skills/`.
+
+**To add one of mine:**
 
 1. Create `skills/<name>/SKILL.md`, with `name` (matching the folder) and `description` in its frontmatter.
 2. From the repo root, run `bin/validate-skills agents/skills/<name>`.
 3. Run `make skills`, then try the skill in a fresh agent session.
 
-## Rules
+**To add a public skill:**
 
-`rules/CLAUDE.md` holds my personal Claude Code rules. Edit it, then run `make rules`.
+1. Read its `SKILL.md` and every script in its folder.
+2. Add a line to `skills/public.conf`: repo, the full 40-character commit you reviewed, its path, and `official` or `third-party`.
+3. Run `make skills`.
+
+## Moving from the old plugins
+
+`i-have-adhd`, `caveman`, `document-skills` and `example-skills` used to be Claude Code plugins. If they're still installed, `make skills` names each one and the `claude plugin uninstall` command that removes it, so skills don't load twice.

@@ -5,6 +5,24 @@ say "Claude Code rules"
 # ~/.claude/CLAUDE.md. Installing here leaves your own ~/.claude/CLAUDE.md alone.
 install_file "$STEP_DIR/CLAUDE.md" "$HOME/.claude/rules/dev-setup.md" 644
 
+# i-have-adhd on for every session: its skill text, without the frontmatter, as
+# a rules file. No hook or Node needed. ADHD_ALWAYS_ON=0 skips it.
+adhd_skill="$PUBLIC_SKILLS_DIR/i-have-adhd/SKILL.md"
+adhd_rule="$HOME/.claude/rules/i-have-adhd.md"
+if [[ "${ADHD_ALWAYS_ON:-1}" != "1" ]]; then
+  [[ -f "$adhd_rule" ]] && info "ADHD_ALWAYS_ON=0: delete $adhd_rule to turn always-on off."
+elif [[ -f "$adhd_skill" ]]; then
+  tmp="$(mktemp)"
+  awk 'NR == 1 && /^---$/ {fm = 1; next} fm && /^---$/ {fm = 0; next} !fm' "$adhd_skill" > "$tmp"
+  install_file "$tmp" "$adhd_rule" 644
+  rm -f "$tmp"
+  info "i-have-adhd is on for every Claude Code session (ADHD_ALWAYS_ON=0 to skip)."
+else
+  info "i-have-adhd isn't downloaded yet, so it isn't on for every session. Run: make skills claude-rules"
+fi
+# shellcheck disable=SC2088  # display text
+[[ -f "$HOME/.claude/.i-have-adhd-always" ]] && info "~/.claude/.i-have-adhd-always is from the old plugin; you can delete it."
+
 # Earlier versions installed these rules as ~/.claude/CLAUDE.md itself.
 OLD_CLAUDE_MD_SHA="aec4b598ffd17d0257e1bd57f974b9717e2c265d30db5d2276ed14d1b77002a3"
 # shellcheck disable=SC2016  # literal backticks: the old file's header text

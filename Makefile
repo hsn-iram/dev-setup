@@ -4,12 +4,13 @@
 STEPS := $(shell ./install.sh --list)
 
 on = $(filter true 1 yes,$(1))
-FLAGS := $(if $(or $(call on,$(dry-run)),$(filter dry-run,$(MAKECMDGOALS))),--dry-run) \
+DRY := $(or $(call on,$(dry-run)),$(filter dry-run,$(MAKECMDGOALS)))
+FLAGS := $(if $(DRY),--dry-run) \
          $(if $(call on,$(yes)),--yes) \
          $(if $(claude-via),--claude-via $(claude-via))
 
 .DEFAULT_GOAL := help
-.PHONY: help install approved test dry-run $(STEPS)
+.PHONY: help install update approved test dry-run $(STEPS)
 
 help:
 	@./install.sh --help
@@ -20,6 +21,11 @@ $(STEPS):
 
 install:
 	@./install.sh --approved $(FLAGS)
+
+# Pull first, then install with the freshly pulled Makefile and scripts.
+update:
+	@$(if $(DRY),echo "[dry-run] git pull --ff-only",git pull --ff-only)
+	@$(MAKE) --no-print-directory install $(if $(DRY),dry-run=true)
 
 approved:
 	@./install.sh --init-approved

@@ -21,6 +21,10 @@ jobs:
           out="$(tmux -L ci source-file software/tmux/tmux.conf 2>&1)"; echo "$out"
           tmux -L ci kill-server
           test -z "$out"
+      - name: wezterm.lua parses
+        run: |
+          sudo apt-get install -y -qq lua5.4
+          luac5.4 -p software/wezterm/wezterm.lua
 
   skills:
     runs-on: ubuntu-latest

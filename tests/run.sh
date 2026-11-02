@@ -42,6 +42,14 @@ check "naming claude-code does run it" 'grep -qE "==> Claude Code([^ ]|$)" <<< "
 out="$(install --dry-run tmux-config)"
 check "tmux-config writes config without installing tmux" 'grep -q "tmux config" <<< "$out" && ! grep -q "brew install tmux" <<< "$out"'
 
+# 2b2. wezterm-config links the config into the repo; tmux-config installs the cheat sheet.
+fresh_home
+install wezterm-config tmux-config >/dev/null
+check "wezterm-config links wezterm.lua to the repo" '[[ "$(readlink "$HOME/.config/wezterm/wezterm.lua")" == "$REPO/software/wezterm/wezterm.lua" ]]'
+check "tmux-config installs the cheat sheet prefix ? opens" '[[ -f "$HOME/.config/tmux/cheatsheet.txt" ]] && grep -q "config/tmux/cheatsheet.txt" "$REPO/software/tmux/tmux.conf"'
+out="$(install wezterm-config)"
+check "wezterm-config re-run is a no-op" 'grep -q "Up to date: $HOME/.config/wezterm/wezterm.lua" <<< "$out"'
+
 # 2c. The approved list: created with everything commented out, then read by --approved.
 fresh_home
 check "--approved without a list fails" '! install --approved >/dev/null'

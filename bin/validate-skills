@@ -24,7 +24,10 @@ if [[ $# -gt 0 ]]; then
   skills=("$@")
 else
   skills=()
-  for d in "$REPO_DIR"/agents/skills/*/; do skills+=("${d%/}"); done
+  for d in "$REPO_DIR"/agents/skills/*/; do
+    [[ "$d" == *-workspace/ ]] && continue
+    skills+=("${d%/}")
+  done
 fi
 
 failed=0

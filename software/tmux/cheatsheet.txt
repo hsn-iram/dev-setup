@@ -1,0 +1,44 @@
+  tmux + WezTerm cheat sheet                       q to close, / to search
+  ---------------------------------------------------------------------------
+  Every tmux key below starts with the prefix: press Ctrl+b, let go, then the key.
+
+  STAGE 1: SURVIVE (days 1-3)
+    |            split side by side
+    -            split top and bottom
+    arrow keys   move between panes (or click a pane)
+    d            detach: tmux keeps running; WezTerm reattaches next time
+    ?            this cheat sheet
+
+  STAGE 2: WINDOWS (days 4-7)
+    c            new window (a full-screen "tab" inside tmux)
+    1 .. 9       jump to window 1..9
+    z            zoom the current pane to full size, press again to undo
+    ,            rename the window
+    x            close the pane (asks first)
+
+  STAGE 3: SESSIONS + COPYING (week 2)
+    s            list sessions, pick one with arrows + Enter
+    [            copy mode: scroll with arrows or the mouse, q to leave
+      v / y        in copy mode: start selecting / copy to the clipboard
+      /            in copy mode: search
+    tclaude      (typed in the shell) Claude Code left, shell right, for this folder
+
+  STAGE 4: WEZTERM (week 3)  no prefix for these
+    Cmd+Shift+L    next theme (remembered after restart)
+    Cmd+Shift+O    solid / see-through, for screen sharing
+    Cmd+drag       move the window (there's no title bar)
+    Cmd+Shift+P    command palette: search any WezTerm action, or type "theme"
+    Cmd+= / Cmd+-  bigger / smaller font, Cmd+0 to reset
+    Shift+click    open a link (tmux takes plain clicks)
+    Shift+drag     select with WezTerm instead of tmux; copies on release
+    Cmd+Shift+T    plain shell outside tmux (escape hatch)
+    Cmd+R          reload the WezTerm config (it also reloads on save)
+
+  WHEN STUCK
+    Ctrl+b r     reload the tmux config
+    Ctrl+b :     tmux command prompt (try: list-keys, for every binding)
+    tmux ls      list sessions from any shell
+    tmux a       reattach to the last session
+
+  Config: software/wezterm/wezterm.lua and software/tmux/tmux.conf in dev-setup
+  Your own tweaks: ~/.config/wezterm/local.lua and ~/.tmux.local.conf

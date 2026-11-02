@@ -42,6 +42,14 @@ check "naming claude-code does run it" 'grep -qE "==> Claude Code([^ ]|$)" <<< "
 out="$(install --dry-run tmux-config)"
 check "tmux-config writes config without installing tmux" 'grep -q "tmux config" <<< "$out" && ! grep -q "brew install tmux" <<< "$out"'
 
+# 2b2. wezterm-config links the config into the repo; tmux-config installs the cheat sheet.
+fresh_home
+install wezterm-config tmux-config >/dev/null
+check "wezterm-config links wezterm.lua to the repo" '[[ "$(readlink "$HOME/.config/wezterm/wezterm.lua")" == "$REPO/software/wezterm/wezterm.lua" ]]'
+check "tmux-config installs the cheat sheet prefix ? opens" '[[ -f "$HOME/.config/tmux/cheatsheet.txt" ]] && grep -q "config/tmux/cheatsheet.txt" "$REPO/software/tmux/tmux.conf"'
+out="$(install wezterm-config)"
+check "wezterm-config re-run is a no-op" 'grep -q "Up to date: $HOME/.config/wezterm/wezterm.lua" <<< "$out"'
+
 # 2c. The approved list: created with everything commented out, then read by --approved.
 fresh_home
 check "--approved without a list fails" '! install --approved >/dev/null'
@@ -127,12 +135,12 @@ ln -s "$REPO/agents/skills/deleted-skill" "$HOME/.claude/skills/deleted-skill"
 mkdir -p "$HOME/.claude/skills/my-own-skill" "$HOME/.agents/skills"
 ln -s /tmp "$HOME/.claude/skills/other-link"
 ln -s "$REPO/agents/skills/log-win" "$HOME/.agents/skills/log-win"
-rm "$HOME/.claude/skills/iram-tone"; ln -s "$REPO/skills/iram-tone" "$HOME/.claude/skills/iram-tone"
+rm "$HOME/.claude/skills/leadership-tone"; ln -s "$REPO/skills/leadership-tone" "$HOME/.claude/skills/leadership-tone"
 install skills >/dev/null
 check "broken link to a deleted skill is removed" '[[ ! -L "$HOME/.claude/skills/deleted-skill" ]]'
 check "link left in ~/.agents/skills by an old version is removed" '[[ ! -L "$HOME/.agents/skills/log-win" ]]'
 check "link into the old top-level skills/ folder is moved to agents/skills/" \
-  '[[ "$(readlink "$HOME/.claude/skills/iram-tone")" == "$REPO/agents/skills/iram-tone" && ! -e "$HOME/.dev-setup-backup" ]]'
+  '[[ "$(readlink "$HOME/.claude/skills/leadership-tone")" == "$REPO/agents/skills/leadership-tone" && ! -e "$HOME/.dev-setup-backup" ]]'
 check "your own skill folder is kept" '[[ -d "$HOME/.claude/skills/my-own-skill" ]]'
 check "links that point elsewhere are kept" '[[ -L "$HOME/.claude/skills/other-link" ]]'
 

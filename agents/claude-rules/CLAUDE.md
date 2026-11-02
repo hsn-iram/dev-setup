@@ -11,7 +11,7 @@
 
 ## Writing for others
 - Anything I'll send (Slack, email, PRs, review comments) must sound like me: human, concise, professional, not repetitive.
-- Use the `iram-tone` skill for messages.
+- Use the `leadership-tone` skill for messages.
 
 ## Skills
 - `learn-codebase`: questions about how a repo works.

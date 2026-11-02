@@ -21,15 +21,20 @@ Skills use the open [Agent Skills](https://agentskills.io) format. `~/.claude/sk
 | `learn-codebase` | You're ramping up on a repo. Say "quiz me" to check your understanding |
 | `capture-learning` | You want to save something you learned to your Codebase Notes |
 | `log-win` | You finished something worth adding to your Brag Doc |
-| `iram-tone` | You're polishing a Slack message |
+| `leadership-tone` | You're polishing a Slack message so it reads like a leader wrote it |
 
 **Public** (`skills/public.conf`, each pinned to a commit): `i-have-adhd`, `caveman` (type `/caveman` for terse replies), and Anthropic's `docx`, `xlsx`, `pptx`, `pdf` and `skill-creator`. They're downloaded to `~/.local/share/dev-setup/public-skills/`.
 
 **To add one of mine:**
 
 1. Create `skills/<name>/SKILL.md`, with `name` (matching the folder) and `description` in its frontmatter.
-2. From the repo root, run `bin/validate-skills agents/skills/<name>`.
-3. Run `make skills`, then try the skill in a fresh agent session.
+2. Add 3 test prompts to `skills/<name>/evals/evals.json` (format: [evaluating skills](https://agentskills.io/skill-creation/evaluating-skills)).
+3. From the repo root, run `bin/validate-skills agents/skills/<name>`.
+4. Run `make skills`, then try the skill in a fresh agent session.
+
+**To score a skill:** run `TESSL_WORKSPACE=<name> bin/tessl-review [agents/skills/<name>]`. It's [Tessl](https://docs.tessl.io/improving-your-skills/reviewing-skills)'s quality review (fails below 70) and security scan (fails on high findings). Needs `brew install tesslio/tap/tessl` and `tessl login`. CI runs it on PRs that change skills, once the repo has a `TESSL_TOKEN` secret and a `TESSL_WORKSPACE` variable.
+
+**To test a skill:** ask Claude Code to "run the evals for `<name>` with skill-creator". It runs each prompt with and without the skill and grades the results. Results go in `skills/<name>-workspace/`, which git ignores.
 
 **To add a public skill:**
 

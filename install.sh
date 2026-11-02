@@ -11,7 +11,7 @@ source "$REPO_DIR/lib/common.sh"
 # Order matters: Homebrew first (programs need it), software before agents
 # (claude-plugins needs Claude Code), and skills before claude-rules (it uses
 # the downloaded i-have-adhd skill).
-SOFTWARE=(homebrew uv node tenv claude-code tmux cursor)
+SOFTWARE=(homebrew uv node tenv claude-code tmux wezterm cursor)
 AGENTS=(skills claude-plugins claude-rules)
 CONFIGS=()
 for s in "${SOFTWARE[@]}"; do

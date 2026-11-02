@@ -3,6 +3,7 @@ say "tmux config"
 
 install_file "$STEP_DIR/tmux.conf" "$HOME/.tmux.conf" 644
 install_file "$STEP_DIR/tclaude" "$HOME/.local/bin/tclaude" 755
+install_file "$STEP_DIR/cheatsheet.txt" "$HOME/.config/tmux/cheatsheet.txt" 644
 
 # Reload any running tmux server so the new config applies now.
 if has tmux && tmux info >/dev/null 2>&1; then

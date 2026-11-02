@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# lua-types: download WezTerm's Lua type definitions (github.com/DrKJeff16/wezterm-types),
+# pinned to a commit, so Cursor's Lua extension autocompletes and checks wezterm.lua.
+# .luarc.json points the extension at the folder this fills.
+set -euo pipefail
+
+REPO="DrKJeff16/wezterm-types"
+SHA="c4ca18ef6c8bff12dc7469db6ec69eafff18de35"
+DEST="$HOME/.local/share/dev-setup/wezterm-types"
+
+if [[ "$(cat "$DEST/.dev-setup-pin" 2>/dev/null)" == "$REPO@$SHA" ]]; then
+  echo "Up to date: $DEST"
+  exit 0
+fi
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+curl -fsSL "https://codeload.github.com/$REPO/tar.gz/$SHA" | tar -xz -C "$tmp" "wezterm-types-$SHA/lua"
+rm -rf "$DEST"
+mkdir -p "$DEST"
+mv "$tmp/wezterm-types-$SHA/lua" "$DEST/lua"
+echo "$REPO@$SHA" > "$DEST/.dev-setup-pin"
+echo "Installed WezTerm Lua types in $DEST."
+echo "In Cursor: Cmd+Shift+P, then 'Developer: Reload Window', to pick them up."

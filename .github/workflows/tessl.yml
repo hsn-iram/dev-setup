@@ -1,0 +1,50 @@
+name: tessl
+on:
+  pull_request:
+    paths:
+      - "agents/skills/**"
+      - "bin/tessl-review"
+      - ".github/workflows/tessl.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+
+# Quality review and security scan of each skill (bin/tessl-review).
+# Skipped until the TESSL_TOKEN secret and TESSL_WORKSPACE variable are set.
+# Actions are pinned to full commit SHAs (tag in the comment).
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    env:
+      TESSL_TOKEN: ${{ secrets.TESSL_TOKEN }}
+      TESSL_WORKSPACE: ${{ vars.TESSL_WORKSPACE }}
+    steps:
+      - name: Check Tessl is set up
+        id: setup
+        run: |
+          if [ -n "$TESSL_TOKEN" ] && [ -n "$TESSL_WORKSPACE" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Tessl review skipped: set the TESSL_TOKEN secret and TESSL_WORKSPACE variable"
+          fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        if: steps.setup.outputs.ready
+        with:
+          fetch-depth: 0
+      - uses: tesslio/setup-tessl@25ec223fc0da33b41b8044ff5ab2b85235f4f91e # v2
+        if: steps.setup.outputs.ready
+        with:
+          version: "0.119.0"
+      # Each quality review costs Tessl credits, so PRs review only the skills they change.
+      - name: Review skills
+        if: steps.setup.outputs.ready
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -z "$BASE_SHA" ]; then bin/tessl-review; exit; fi
+          skills=()
+          for d in $(git diff --name-only "$BASE_SHA" HEAD -- agents/skills | cut -d/ -f1-3 | sort -u); do
+            [ -f "$d/SKILL.md" ] && skills+=("$d")
+          done
+          if [ ${#skills[@]} -eq 0 ]; then echo "No skills changed"; exit 0; fi
+          bin/tessl-review "${skills[@]}"

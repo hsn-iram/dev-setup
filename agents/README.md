@@ -17,13 +17,13 @@ Run `skills` before `claude-rules`; i-have-adhd's always-on rule comes from the 
 
 | Agent | Path | How |
 |---|---|---|
-| Claude Code | `~/.claude/CLAUDE.md` | Link, always |
+| Claude Code | `~/.claude/CLAUDE.md` | Link, if Claude Code is installed |
 | Cursor | `~/.cursor/rules/agents.mdc` | Copy with `alwaysApply: true` added (Cursor has no global AGENTS.md). Re-run after editing |
 | Codex | `~/.codex/AGENTS.md` | Link, if Codex is installed |
 | Gemini CLI | `~/.gemini/GEMINI.md` | Link, if installed |
 | OpenCode | `~/.config/opencode/AGENTS.md` | Link, if installed |
 
-After installing a new agent, run `make agents-md` again. A real `~/.claude/CLAUDE.md` is moved to `~/.dev-setup-backup/` first; copy your own lines from it into `AGENTS.md`.
+After installing or removing an agent, run `make agents-md` again: it links the new one and removes links it made for agents that are gone. A real file already at one of these paths is moved to `~/.dev-setup-backup/` first; copy your own lines from it into `AGENTS.md`.
 
 ## Skills
 

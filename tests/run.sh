@@ -19,6 +19,14 @@ fail() { printf 'FAIL %s\n' "$1"; fails=$((fails + 1)); }
 check() { if eval "$2"; then pass "$1"; else fail "$1"; fi; }
 fresh_home() { HOME="$(mktemp -d)"; export HOME; }
 install() { "$REPO/install.sh" "$@" 2>&1; }
+# Run with or without Claude Code on PATH, whatever this machine has installed.
+NO_CLAUDE_PATH="$(tr ':' '\n' <<< "$PATH" | while read -r d; do [[ -x "$d/claude" ]] || printf '%s:' "$d"; done)"
+NO_CLAUDE_PATH="${NO_CLAUDE_PATH%:}"
+without_claude() { PATH="$NO_CLAUDE_PATH" "$@"; }
+with_claude() {
+  mkdir -p "$HOME/fake-bin" && printf '#!/bin/sh\n' > "$HOME/fake-bin/claude" && chmod +x "$HOME/fake-bin/claude"
+  PATH="$HOME/fake-bin:$PATH" "$@"
+}
 
 # 1. Nothing runs unless named, and a typo is rejected instead of silently running nothing.
 fresh_home
@@ -67,11 +75,9 @@ check "wezterm-config re-run is a no-op" 'grep -q "Up to date: $HOME/.config/wez
 
 # 2b4. tclaude only goes where Claude Code is installed.
 fresh_home
-no_claude_path="$(tr ':' '\n' <<< "$PATH" | while read -r d; do [[ -x "$d/claude" ]] || printf '%s:' "$d"; done)"
-PATH="${no_claude_path%:}" install tmux-config >/dev/null
+without_claude install tmux-config >/dev/null
 check "tmux-config skips tclaude without Claude Code" '[[ ! -e "$HOME/.local/bin/tclaude" ]]'
-mkdir -p "$HOME/fake-bin" && printf '#!/bin/sh\n' > "$HOME/fake-bin/claude" && chmod +x "$HOME/fake-bin/claude"
-PATH="$HOME/fake-bin:$PATH" install tmux-config >/dev/null
+with_claude install tmux-config >/dev/null
 check "tmux-config installs tclaude with Claude Code" '[[ -x "$HOME/.local/bin/tclaude" ]]'
 
 # 2c. The approved list: created with everything commented out, then read by --approved.
@@ -135,7 +141,7 @@ check "ADHD_ALWAYS_ON=0 skips the i-have-adhd rule" '[[ ! -e "$HOME/.claude/rule
 # 3. A real skills and rules run links every skill and the global AGENTS.md.
 fresh_home
 mkdir -p "$HOME/.cursor"
-install skills agents-md claude-rules >/dev/null
+with_claude install skills agents-md claude-rules >/dev/null
 for s in "$REPO"/agents/skills/*/; do
   n="$(basename "$s")"
   check "skill $n linked into ~/.claude/skills" '[[ "$(readlink "$HOME/.claude/skills/$n")" == "$REPO/agents/skills/$n" ]]'
@@ -152,15 +158,23 @@ if ! command -v codex >/dev/null && ! command -v gemini >/dev/null; then
 fi
 
 # 4. Re-running changes nothing.
-out="$(install skills agents-md claude-rules)"
+out="$(with_claude install skills agents-md claude-rules)"
 check "second run changes nothing" '! grep -qE "Linked|Installed|Backing up|Removing|Moving" <<< "$out"'
 
 # 5. Your own ~/.claude/CLAUDE.md is backed up, not lost, when the link replaces it.
 rm "$HOME/.claude/CLAUDE.md"; echo "- my own rule" > "$HOME/.claude/CLAUDE.md"
-out="$(install agents-md)"
+out="$(with_claude install agents-md)"
 check "own ~/.claude/CLAUDE.md is backed up and you're told" \
   'grep -rqs "my own rule" "$HOME/.dev-setup-backup" && grep -q "Copy any of your own lines" <<< "$out" && [[ -L "$HOME/.claude/CLAUDE.md" ]]'
 rm -rf "$HOME/.dev-setup-backup"
+
+# 5b. Without Claude Code there's no ~/.claude/CLAUDE.md, and an old link is removed.
+without_claude install agents-md >/dev/null
+check "without Claude Code, the CLAUDE.md link is removed" '[[ ! -e "$HOME/.claude/CLAUDE.md" && ! -L "$HOME/.claude/CLAUDE.md" ]]'
+echo "- my own rule" > "$HOME/.claude/CLAUDE.md"
+without_claude install agents-md >/dev/null
+check "without Claude Code, your own CLAUDE.md is left alone" 'grep -q "my own rule" "$HOME/.claude/CLAUDE.md"'
+rm "$HOME/.claude/CLAUDE.md"
 
 # 6. Stale links are pruned; real folders and other links are not.
 ln -s "$REPO/agents/skills/deleted-skill" "$HOME/.claude/skills/deleted-skill"
@@ -180,7 +194,7 @@ check "links that point elsewhere are kept" '[[ -L "$HOME/.claude/skills/other-l
 if git -C "$REPO" cat-file -e 485b7c7 2>/dev/null; then
   fresh_home; mkdir -p "$HOME/.claude"
   git -C "$REPO" show 485b7c7:config/CLAUDE.md > "$HOME/.claude/CLAUDE.md"
-  install agents-md >/dev/null
+  with_claude install agents-md >/dev/null
   check "old ~/.claude/CLAUDE.md is moved to the backup folder and replaced by the link" \
     '[[ -L "$HOME/.claude/CLAUDE.md" && -n "$(find "$HOME/.dev-setup-backup" -name CLAUDE.md)" ]]'
 fi

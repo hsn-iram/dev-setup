@@ -2,27 +2,33 @@
 say "Global AGENTS.md"
 
 # One rules file for every agent, at each agent's global (all-projects) path.
-# Links, so a git pull updates them all. Agents that aren't installed are
-# skipped; run make agents-md again after installing one.
+# Links, so a git pull updates them all. Only for agents that are installed;
+# run make agents-md again after installing one.
 rules="$STEP_DIR/AGENTS.md"
 
-# Claude Code reads CLAUDE.md, not AGENTS.md. Always linked.
-if [[ -f "$HOME/.claude/CLAUDE.md" && ! -L "$HOME/.claude/CLAUDE.md" ]]; then
-  # shellcheck disable=SC2088  # display text
-  warn "~/.claude/CLAUDE.md is replaced by a link. Copy any of your own lines from the backup into agents/agents-md/AGENTS.md."
-fi
-link_path "$rules" "$HOME/.claude/CLAUDE.md"
+# link_for COMMAND NAME DEST: link DEST if COMMAND is installed. If it isn't,
+# remove a link this step made earlier; anything else at DEST is left alone.
+link_for() {
+  local cmd="$1" name="$2" dest="$3"
+  if has "$cmd"; then
+    if [[ -f "$dest" && ! -L "$dest" ]]; then
+      warn "$dest is replaced by a link. Copy any of your own lines from the backup into agents/agents-md/AGENTS.md."
+    fi
+    link_path "$rules" "$dest"
+  elif [[ -L "$dest" && "$(readlink "$dest")" == "$rules" ]]; then
+    info "$name isn't installed; removing $dest"
+    run rm "$dest"
+  else
+    info "$name isn't installed; skipping $dest"
+  fi
+}
 
-# Not created before Codex is installed: IT checks for ~/.codex to see that
-# their Codex rollout finished.
-if has codex; then link_path "$rules" "${CODEX_HOME:-$HOME/.codex}/AGENTS.md"
-else info "Codex isn't installed; skipping ~/.codex/AGENTS.md"; fi
-
-if has gemini; then link_path "$rules" "$HOME/.gemini/GEMINI.md"
-else info "Gemini CLI isn't installed; skipping ~/.gemini/GEMINI.md"; fi
-
-if has opencode; then link_path "$rules" "$HOME/.config/opencode/AGENTS.md"
-else info "OpenCode isn't installed; skipping ~/.config/opencode/AGENTS.md"; fi
+# Claude Code reads CLAUDE.md, not AGENTS.md.
+link_for claude "Claude Code" "$HOME/.claude/CLAUDE.md"
+# Never creates ~/.codex early: IT checks for it to see their Codex rollout finished.
+link_for codex Codex "${CODEX_HOME:-$HOME/.codex}/AGENTS.md"
+link_for gemini "Gemini CLI" "$HOME/.gemini/GEMINI.md"
+link_for opencode OpenCode "$HOME/.config/opencode/AGENTS.md"
 
 # Cursor has no global AGENTS.md. Its global rules are .mdc files in
 # ~/.cursor/rules, which need frontmatter to be always on, so this is a copy.

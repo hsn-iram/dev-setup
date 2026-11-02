@@ -21,7 +21,7 @@ Skills use the open [Agent Skills](https://agentskills.io) format. `~/.claude/sk
 | `learn-codebase` | You're ramping up on a repo. Say "quiz me" to check your understanding |
 | `capture-learning` | You want to save something you learned to your Codebase Notes |
 | `log-win` | You finished something worth adding to your Brag Doc |
-| `iram-tone` | You're polishing a Slack message |
+| `leadership-tone` | You're polishing a Slack message so it reads like a leader wrote it |
 
 **Public** (`skills/public.conf`, each pinned to a commit): `i-have-adhd`, `caveman` (type `/caveman` for terse replies), and Anthropic's `docx`, `xlsx`, `pptx`, `pdf` and `skill-creator`. They're downloaded to `~/.local/share/dev-setup/public-skills/`.
 

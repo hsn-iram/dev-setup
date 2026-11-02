@@ -8,8 +8,11 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export ALLOW_NON_MAC=1
-# CI runners set this; unset, config paths follow the throwaway HOME.
-unset XDG_CONFIG_HOME
+# CI runners set these; unset, config and data paths follow the throwaway HOME.
+unset XDG_CONFIG_HOME XDG_DATA_HOME
+# No downloads by default; the public skills checks below set their own list.
+export PUBLIC_SKILLS_CONF=/dev/null
+pin="0123456789abcdef0123456789abcdef01234567"
 fails=0
 pass() { printf 'ok   %s\n' "$1"; }
 fail() { printf 'FAIL %s\n' "$1"; fails=$((fails + 1)); }
@@ -25,14 +28,15 @@ check "unknown step name is rejected" '! install skill >/dev/null'
 # 2. A full dry run creates nothing at all in a fresh home.
 fresh_home
 read -r -a all_steps <<< "$("$REPO/install.sh" --list)"
-install --dry-run --yes "${all_steps[@]}" >/dev/null
+PUBLIC_SKILLS_CONF="$REPO/agents/skills/public.conf" install --dry-run --yes "${all_steps[@]}" >/dev/null
 created="$(find "$HOME" -mindepth 1 | head -3)"
 check "dry run leaves an empty home empty" '[[ -z "$created" ]]'
 [[ -z "$created" ]] || printf '     created:\n%s\n' "$created"
 
 # 2b. Claude Code is only touched when named; -config skips the program install.
-out="$(install --dry-run agents tmux)"
-check "agents and tmux don't install Claude Code" '! grep -qE "==> Claude Code([^ ]|$)" <<< "$out"'
+check "the old agents catch-all is gone" '! install agents >/dev/null'
+out="$(install --dry-run skills claude-plugins claude-rules tmux)"
+check "agent steps and tmux don't install Claude Code" '! grep -qE "==> Claude Code([^ ]|$)" <<< "$out"'
 out="$(install --dry-run claude-code)"
 check "naming claude-code does run it" 'grep -qE "==> Claude Code([^ ]|$)" <<< "$out"'
 out="$(install --dry-run tmux-config)"
@@ -44,7 +48,7 @@ check "--approved without a list fails" '! install --approved >/dev/null'
 install --init-approved >/dev/null
 list="$HOME/.config/dev-setup/approved"
 check "approved list approves nothing by default" '[[ -z "$(sed "s/#.*//" "$list" | tr -d "[:space:]")" ]]'
-printf 'skills  # my skills\nrules\n' >> "$list"
+printf 'skills  # my skills\nclaude-rules\n' >> "$list"
 out="$(install --dry-run --approved)"
 check "--approved runs only the listed steps" 'grep -q "Agent skills" <<< "$out" && ! grep -q "==> tmux" <<< "$out"'
 
@@ -56,28 +60,66 @@ if command -v make >/dev/null; then
   check "make skills dry-run=true is a dry run" 'grep -q "DRY RUN" <<< "$out"'
   out="$(make -s -C "$REPO" dry-run skills 2>&1)"
   check "make dry-run skills is a dry run" 'grep -q "DRY RUN" <<< "$out"'
+  out="$(make -s -C "$REPO" update dry-run=true 2>&1)"
+  check "make update dry-run=true pulls nothing and installs the approved list as a dry run" \
+    'grep -q "\[dry-run\] git pull" <<< "$out" && grep -q "DRY RUN" <<< "$out" && grep -q "Agent skills" <<< "$out"'
 fi
+
+# 2e. A step run by hand can be added to the approved list (here with --yes, since tests have no terminal).
+fresh_home
+install --yes claude-rules >/dev/null
+check "hand-run step is added to the approved list" 'grep -qx "claude-rules" "$HOME/.config/dev-setup/approved"'
+install --yes claude-rules >/dev/null
+check "an approved step isn't added twice" '[[ "$(grep -cx "claude-rules" "$HOME/.config/dev-setup/approved")" == 1 ]]'
+fresh_home
+install claude-rules >/dev/null
+check "without a terminal or --yes, nothing is approved" '[[ ! -e "$HOME/.config/dev-setup/approved" ]]'
+
+# 2f. Public skills: pinned in public.conf, linked like mine, and pruned when removed.
+bad_pins="$(grep -vE '^[[:space:]]*(#|$)' "$REPO/agents/skills/public.conf" \
+  | awk -F'|' '{gsub(/[[:space:]]/, "", $2); if (length($2) != 40 || $2 !~ /^[0-9a-f]+$/) print}')"
+check "every public skill is pinned to a full 40-char commit" '[[ -z "$bad_pins" ]]'
+fresh_home
+pub="$HOME/.local/share/dev-setup/public-skills"
+mkdir -p "$pub/demo"; echo "# demo" > "$pub/demo/SKILL.md"; echo "example/demo@$pin" > "$pub/demo/.dev-setup-pin"
+echo "example/demo | $pin | skills/demo | official" > "$HOME/public.conf"
+out="$(PUBLIC_SKILLS_CONF="$HOME/public.conf" install skills)"
+check "an already-downloaded public skill isn't downloaded again" 'grep -q "Up to date: demo" <<< "$out"'
+check "public skill linked into ~/.claude/skills" '[[ "$(readlink "$HOME/.claude/skills/demo")" == "$pub/demo" ]]'
+install skills >/dev/null
+check "public skill removed from public.conf is unlinked" '[[ ! -L "$HOME/.claude/skills/demo" ]]'
+echo "example/demo | abc123 | skills/demo | official" > "$HOME/public.conf"
+check "a short commit in public.conf is rejected" '! PUBLIC_SKILLS_CONF="$HOME/public.conf" install skills >/dev/null'
+
+# 2g. claude-rules turns i-have-adhd on for every session, from the downloaded skill.
+mkdir -p "$pub/i-have-adhd"; printf -- '---\nname: i-have-adhd\n---\n# ADHD rules\n' > "$pub/i-have-adhd/SKILL.md"
+install claude-rules >/dev/null
+check "i-have-adhd rule installed without its frontmatter" \
+  'grep -q "# ADHD rules" "$HOME/.claude/rules/i-have-adhd.md" && ! grep -q "name:" "$HOME/.claude/rules/i-have-adhd.md"'
+rm "$HOME/.claude/rules/i-have-adhd.md"
+ADHD_ALWAYS_ON=0 install claude-rules >/dev/null
+check "ADHD_ALWAYS_ON=0 skips the i-have-adhd rule" '[[ ! -e "$HOME/.claude/rules/i-have-adhd.md" ]]'
 
 # 3. A real skills and rules run links every skill and installs the rules file.
 fresh_home
-install skills rules >/dev/null
+install skills claude-rules >/dev/null
 for s in "$REPO"/agents/skills/*/; do
   n="$(basename "$s")"
   check "skill $n linked into ~/.claude/skills" '[[ "$(readlink "$HOME/.claude/skills/$n")" == "$REPO/agents/skills/$n" ]]'
 done
-check "rules installed to ~/.claude/rules/dev-setup.md" 'cmp -s "$REPO/agents/rules/CLAUDE.md" "$HOME/.claude/rules/dev-setup.md"'
+check "rules installed to ~/.claude/rules/dev-setup.md" 'cmp -s "$REPO/agents/claude-rules/CLAUDE.md" "$HOME/.claude/rules/dev-setup.md"'
 check "~/.claude/CLAUDE.md is not created" '[[ ! -e "$HOME/.claude/CLAUDE.md" ]]'
 if ! command -v codex >/dev/null && ! command -v gemini >/dev/null; then
   check "~/.agents/skills not used without Codex or Gemini CLI" '[[ ! -e "$HOME/.agents/skills" ]]'
 fi
 
 # 4. Re-running changes nothing.
-out="$(install skills rules)"
+out="$(install skills claude-rules)"
 check "second run changes nothing" '! grep -qE "Linked|Installed|Backing up|Removing" <<< "$out"'
 
 # 5. User edits to ~/.claude/CLAUDE.md survive a re-run.
 echo "- my own rule" > "$HOME/.claude/CLAUDE.md"
-install rules >/dev/null
+install claude-rules >/dev/null
 check "own ~/.claude/CLAUDE.md is left alone" 'grep -q "my own rule" "$HOME/.claude/CLAUDE.md"'
 
 # 6. Stale links are pruned; real folders and other links are not.
@@ -98,7 +140,7 @@ check "links that point elsewhere are kept" '[[ -L "$HOME/.claude/skills/other-l
 if git -C "$REPO" cat-file -e 485b7c7 2>/dev/null; then
   fresh_home; mkdir -p "$HOME/.claude"
   git -C "$REPO" show 485b7c7:config/CLAUDE.md > "$HOME/.claude/CLAUDE.md"
-  install rules >/dev/null
+  install claude-rules >/dev/null
   check "old unedited ~/.claude/CLAUDE.md is moved to the backup folder" \
     '[[ ! -e "$HOME/.claude/CLAUDE.md" && -n "$(find "$HOME/.dev-setup-backup" -name CLAUDE.md)" ]]'
 fi

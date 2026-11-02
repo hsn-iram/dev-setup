@@ -19,27 +19,31 @@ make install              # install everything on the list
 ```bash
 make tmux node                 # install these programs, plus their config
 make tmux-config               # config only, for a program IT installed for you
-make agents                    # skills, rules and plugins; installs no programs
-make claude-code               # Claude Code installs only when you name it
+make skills                    # my skills + pinned public skills, for every agent
+make claude-code claude-rules  # Claude Code only when you name it
 make tmux node dry-run=true    # preview any of these (or: make dry-run tmux node)
 ```
 
 Options: `dry-run=true`, `yes=true` (answer yes to prompts), `claude-via=brew`.
+
+When you run a target by hand, it asks whether to add it to the approved list, so `make update` keeps it current.
 
 ## What's where
 
 | Folder | What's in it |
 |---|---|
 | [`software/`](software/README.md) | One folder per program: `install.sh` installs it, `config.sh` writes its config |
-| [`agents/`](agents/README.md) | AI agent setup: plugins, skills, rules |
+| [`agents/`](agents/README.md) | Agent setup: `skills` for every agent, plus `claude-plugins` and `claude-rules` |
 | `lib/` | Shared helpers and the preflight checks |
 | `tests/` | `make test` runs them against a throwaway home folder |
 
 ## Update
 
 ```bash
-cd ~/dev-setup && git pull && make install
+cd ~/dev-setup && make update   # git pull, then install everything on the approved list
 ```
+
+Update runs only what's approved. Nothing records what's been installed; each step checks the laptop instead ("Already installed", "Up to date"), so re-runs are quick. It installs programs that are missing but doesn't upgrade them; use `brew upgrade` for that.
 
 ## Rules for this repo
 

@@ -28,8 +28,11 @@ Skills use the open [Agent Skills](https://agentskills.io) format. `~/.claude/sk
 **To add one of mine:**
 
 1. Create `skills/<name>/SKILL.md`, with `name` (matching the folder) and `description` in its frontmatter.
-2. From the repo root, run `bin/validate-skills agents/skills/<name>`.
-3. Run `make skills`, then try the skill in a fresh agent session.
+2. Add 3 test prompts to `skills/<name>/evals/evals.json` (format: [evaluating skills](https://agentskills.io/skill-creation/evaluating-skills)).
+3. From the repo root, run `bin/validate-skills agents/skills/<name>`.
+4. Run `make skills`, then try the skill in a fresh agent session.
+
+**To test a skill:** ask Claude Code to "run the evals for `<name>` with skill-creator". It runs each prompt with and without the skill and grades the results. Results go in `skills/<name>-workspace/`, which git ignores.
 
 **To add a public skill:**
 

@@ -1,0 +1,39 @@
+{
+  "skill_name": "log-win",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "just log it: I added retries to the webhook sender, failed deliveries dropped from 4% to 0.3%. Brag doc: [brag doc link]",
+      "expected_output": "One Wins row with today's date, an active-verb 'What I did', the 4% to 0.3% impact, and one Leadership signal, logged without a confirm step.",
+      "files": [],
+      "assertions": [
+        "The row has four columns: Date, What I did, Impact, Leadership signal",
+        "Impact uses 4% and 0.3% exactly and adds no other metric",
+        "Leadership signal is exactly one value from the skill's list",
+        "Does not ask for confirmation before logging"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "finally wrote the onboarding doc for new hires on my team, log this win",
+      "expected_output": "Asks exactly one question about impact (who noticed, what moved), or logs Impact as TBD with a check date. Invents no metric.",
+      "files": [],
+      "assertions": [
+        "Asks at most one question",
+        "No invented number or metric appears in the row",
+        "If impact is unknown, the row says 'Impact: TBD, check by <date>'"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "log a win: closed 15 tickets today",
+      "expected_output": "Flags that ticket count alone won't show up in a review and suggests one way to make the work visible, then asks about impact or logs it.",
+      "files": [],
+      "assertions": [
+        "Says ticket count alone is unlikely to matter in a review",
+        "Suggests a write-up, demo or post to make the work visible",
+        "Does not invent what the tickets were or their impact"
+      ]
+    }
+  ]
+}

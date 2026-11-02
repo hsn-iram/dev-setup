@@ -8,6 +8,8 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export ALLOW_NON_MAC=1
+# CI runners set this; unset, config paths follow the throwaway HOME.
+unset XDG_CONFIG_HOME
 fails=0
 pass() { printf 'ok   %s\n' "$1"; }
 fail() { printf 'FAIL %s\n' "$1"; fails=$((fails + 1)); }
@@ -22,12 +24,17 @@ check "unknown step name is rejected" '! install skill >/dev/null'
 
 # 2. A full dry run creates nothing at all in a fresh home.
 fresh_home
-install --dry-run --yes $("$REPO/install.sh" --list) >/dev/null
-check "dry run leaves an empty home empty" '[[ -z "$(find "$HOME" -mindepth 1 | head -1)" ]]'
+read -r -a all_steps <<< "$("$REPO/install.sh" --list)"
+install --dry-run --yes "${all_steps[@]}" >/dev/null
+created="$(find "$HOME" -mindepth 1 | head -3)"
+check "dry run leaves an empty home empty" '[[ -z "$created" ]]'
+[[ -z "$created" ]] || printf '     created:\n%s\n' "$created"
 
 # 2b. Claude Code is only touched when named; -config skips the program install.
 out="$(install --dry-run agents tmux)"
-check "agents and tmux don't install Claude Code" '! grep -qx "==> Claude Code" <<< "$(sed "s/\x1b\[[0-9;]*m//g" <<< "$out")"'
+check "agents and tmux don't install Claude Code" '! grep -qE "==> Claude Code([^ ]|$)" <<< "$out"'
+out="$(install --dry-run claude-code)"
+check "naming claude-code does run it" 'grep -qE "==> Claude Code([^ ]|$)" <<< "$out"'
 out="$(install --dry-run tmux-config)"
 check "tmux-config writes config without installing tmux" 'grep -q "tmux config" <<< "$out" && ! grep -q "brew install tmux" <<< "$out"'
 

@@ -2,7 +2,7 @@
 say "Homebrew"
 
 if has brew; then
-  info "Already installed: $(brew --version | head -1)"
+  info "Already installed: $(command -v brew)"
 else
   # Official installer (https://brew.sh). It's the one step that uses sudo: it asks
   # for your Mac password to create /opt/homebrew, so it needs an admin account.

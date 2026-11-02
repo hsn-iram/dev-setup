@@ -15,7 +15,7 @@ if ! has brew; then
   done
 fi
 if has brew; then
-  info "Homebrew: $(brew --version | head -1)"
+  info "Homebrew: $(command -v brew)"
 else
   info "Homebrew isn't installed. Programs need it (make homebrew); config and agent steps don't."
 fi

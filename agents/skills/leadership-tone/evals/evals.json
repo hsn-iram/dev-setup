@@ -1,0 +1,46 @@
+{
+  "skill_name": "leadership-tone",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "can u make this sound better, posting in #platform: \"hey sorry to bug everyone, was just wondering if anyone knows why the nightly build keeps failing?? i think its the cache but idk, been stuck on it since this morning and cant merge my thing\"",
+      "expected_output": "A shorter, point-first message asking a specific owner (or [placeholder]) for help on the nightly build, saying what was tried and what is blocked, plus up to 3 one-line notes.",
+      "files": [],
+      "assertions": [
+        "The first line states the ask or problem, not an apology or greeting",
+        "The rewrite contains no 'sorry' and no 'just wondering'",
+        "The ask names an owner or uses a [placeholder] for one",
+        "The rewrite says what is blocked (the merge)",
+        "The rewrite is shorter than the draft",
+        "There are at most 3 notes after the rewrite",
+        "The response asks the user no questions"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Rewrite for my VP, weekly update: \"This week I met with the data team, reviewed three PRs, fixed some flaky tests, looked into the migration and started planning the rollout. Migration should be done soon.\"",
+      "expected_output": "An upward update that leads with the outcome, then any risk, then the next step with a date placeholder instead of 'soon'.",
+      "files": [],
+      "assertions": [
+        "The first line is an outcome, not a list of activities",
+        "'soon' is replaced by a [placeholder] date or checkpoint",
+        "No date, metric or commitment appears that was not in the draft",
+        "The rewrite does not list every activity from the draft",
+        "Formatting is Slack markdown only (no # headers)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "polish this thank-you for the team channel, keep it fun: \"shoutout to Sam 🎉🎉 the query fix took p95 from 800ms to 300ms, huge\"",
+      "expected_output": "Specific public thanks naming Sam, the fix and its impact, keeping the exact numbers and the emoji.",
+      "files": [],
+      "assertions": [
+        "The numbers 800ms and 300ms appear unchanged",
+        "Sam is named",
+        "At least one 🎉 emoji is kept",
+        "No new metric, team name or outcome is invented",
+        "The rewrite says what the impact was, not only 'thanks'"
+      ]
+    }
+  ]
+}

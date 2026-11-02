@@ -35,9 +35,16 @@ WezTerm opens into the tmux session `main`, creating it if needed, so closing th
 
 | Keys | Does |
 |---|---|
+| `Cmd+Shift+L` | Next theme. Remembered after restart |
+| `Cmd+Shift+O` | Solid or see-through, for screen sharing |
+| `Cmd+drag` | Move the window (there's no title bar) |
 | `Cmd+Shift+T` | A plain shell outside tmux |
-| `Cmd+Shift+P` | Search every WezTerm action |
+| `Cmd+Shift+P` | Search every WezTerm action, including each theme |
 | `Shift+click` | Open a link (tmux takes plain clicks) |
+
+To change themes, transparency or font size, edit the "Settings to tweak" block at the top of `wezterm.lua`. tmux uses the theme's own colors, so it follows along.
+
+**Editing the Lua:** open the repo in Cursor and accept the recommended extensions (Lua and StyLua). Then run `bin/lua-types` once, for autocomplete and checks on every WezTerm setting. Saving formats the file with StyLua, and CI fails if it isn't formatted.
 
 ## Adding a program
 

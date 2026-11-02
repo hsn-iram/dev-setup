@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: shellcheck
-        run: shellcheck -x install.sh lib/*.sh software/*/*.sh agents/*/install.sh software/tmux/tclaude bin/validate-skills tests/run.sh
+        run: shellcheck -x install.sh lib/*.sh software/*/*.sh agents/*/install.sh software/tmux/tclaude bin/validate-skills bin/lua-types tests/run.sh
       - name: tmux config loads cleanly
         run: |
           sudo apt-get install -y -qq tmux
@@ -25,6 +25,12 @@ jobs:
         run: |
           sudo apt-get install -y -qq lua5.4
           luac5.4 -p software/wezterm/wezterm.lua
+      - name: Lua is formatted (StyLua, settings in .stylua.toml)
+        uses: JohnnyMorganz/stylua-action@76fd70c03e6340ceaf673366712db9b20560b402 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: 2.6.0
+          args: --check software/wezterm
 
   skills:
     runs-on: ubuntu-latest

@@ -24,7 +24,10 @@
     tclaude      (typed in the shell) Claude Code left, shell right, for this folder
 
   STAGE 4: WEZTERM (week 3)  no prefix for these
-    Cmd+Shift+P    command palette: search any WezTerm action
+    Cmd+Shift+L    next theme (remembered after restart)
+    Cmd+Shift+O    solid / see-through, for screen sharing
+    Cmd+drag       move the window (there's no title bar)
+    Cmd+Shift+P    command palette: search any WezTerm action, or type "theme"
     Cmd+= / Cmd+-  bigger / smaller font, Cmd+0 to reset
     Shift+click    open a link (tmux takes plain clicks)
     Shift+drag     select with WezTerm instead of tmux; copies on release

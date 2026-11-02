@@ -20,6 +20,7 @@ make install              # install everything on the list
 make tmux node                 # install these programs, plus their config
 make tmux-config               # config only, for a program IT installed for you
 make skills                    # my skills + pinned public skills, for every agent
+make agents-md                 # my rules (AGENTS.md) for every agent, incl. ~/.claude/CLAUDE.md
 make claude-code claude-rules  # Claude Code only when you name it
 make tmux node dry-run=true    # preview any of these (or: make dry-run tmux node)
 ```
@@ -33,7 +34,7 @@ When you run a target by hand, it asks whether to add it to the approved list, s
 | Folder | What's in it |
 |---|---|
 | [`software/`](software/README.md) | One folder per program: `install.sh` installs it, `config.sh` writes its config |
-| [`agents/`](agents/README.md) | Agent setup: `skills` for every agent, plus `claude-plugins` and `claude-rules` |
+| [`agents/`](agents/README.md) | Agent setup: `skills` and `agents-md` for every agent, plus `claude-plugins` and `claude-rules` |
 | `lib/` | Shared helpers and the preflight checks |
 | `tests/` | `make test` runs them against a throwaway home folder |
 

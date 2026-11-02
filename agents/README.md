@@ -5,10 +5,25 @@ Agent setup. Nothing here installs a program. Pick targets for the agents this l
 | Target | For | Does |
 |---|---|---|
 | `skills` | Every agent | Links my skills (folders here) and the pinned public skills in `skills/public.conf` into each agent's skills folder |
+| `agents-md` | Every agent | Puts my rules, `agents-md/AGENTS.md`, at each agent's global path (table below) |
 | `claude-plugins` | Claude Code | Installs the plugins in `claude-plugins/plugins.conf`. Empty for now; it's for things that need Claude Code itself, like hooks |
-| `claude-rules` | Claude Code | Installs `claude-rules/CLAUDE.md` as `~/.claude/rules/dev-setup.md`, and turns i-have-adhd on for every session (`ADHD_ALWAYS_ON=0` skips it) |
+| `claude-rules` | Claude Code | Turns i-have-adhd on for every session (`ADHD_ALWAYS_ON=0` skips it) |
 
 Run `skills` before `claude-rules`; i-have-adhd's always-on rule comes from the downloaded skill. In one command (`make skills claude-rules`), the order is handled for you.
+
+## Global AGENTS.md
+
+`agents-md/AGENTS.md` holds my rules for every project. Edit it there. `make agents-md` puts it where each agent looks:
+
+| Agent | Path | How |
+|---|---|---|
+| Claude Code | `~/.claude/CLAUDE.md` | Link, if Claude Code is installed |
+| Cursor | `~/.cursor/rules/agents.mdc` | Copy with `alwaysApply: true` added (Cursor has no global AGENTS.md). Re-run after editing |
+| Codex | `~/.codex/AGENTS.md` | Link, if Codex is installed |
+| Gemini CLI | `~/.gemini/GEMINI.md` | Link, if installed |
+| OpenCode | `~/.config/opencode/AGENTS.md` | Link, if installed |
+
+After installing or removing an agent, run `make agents-md` again: it links the new one and removes links it made for agents that are gone. A real file already at one of these paths is moved to `~/.dev-setup-backup/` first; copy your own lines from it into `AGENTS.md`.
 
 ## Skills
 

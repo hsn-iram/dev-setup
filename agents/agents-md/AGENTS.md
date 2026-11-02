@@ -1,6 +1,6 @@
 # Personal rules
 
-<!-- Installed by dev-setup to ~/.claude/rules/dev-setup.md. Edit it in the dev-setup repo; re-running the setup replaces the installed copy. -->
+<!-- My global agent rules. make agents-md links this file as ~/.claude/CLAUDE.md and as each installed agent's global AGENTS.md, and copies it to ~/.cursor/rules/agents.mdc. Edit it in the dev-setup repo (agents/agents-md/AGENTS.md); re-run make agents-md to refresh the Cursor copy. -->
 
 ## Communication
 - Pyramid order: answer or recommendation first, then supporting points, then detail.

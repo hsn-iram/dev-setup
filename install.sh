@@ -12,7 +12,7 @@ source "$REPO_DIR/lib/common.sh"
 # (claude-plugins needs Claude Code), and skills before claude-rules (it uses
 # the downloaded i-have-adhd skill).
 SOFTWARE=(homebrew uv node tenv claude-code tmux wezterm starship zsh-plugins bat cursor)
-AGENTS=(skills claude-plugins claude-rules)
+AGENTS=(skills agents-md claude-plugins claude-rules)
 CONFIGS=()
 for s in "${SOFTWARE[@]}"; do
   [[ -f "$REPO_DIR/software/$s/config.sh" ]] && CONFIGS+=("$s-config")
@@ -31,8 +31,9 @@ Pick what to install. Nothing installs unless you name it.
     ${CONFIGS[*]}
   Agent setup (installs no programs):
     skills          my skills + pinned public skills, for every agent on this laptop
+    agents-md       my rules (AGENTS.md) for every agent: ~/.claude/CLAUDE.md, Cursor, Codex...
     claude-plugins  Claude Code only
-    claude-rules    Claude Code only: my rules, and i-have-adhd on for every session
+    claude-rules    Claude Code only: i-have-adhd on for every session
 
   make tmux node                 install these
   make tmux node dry-run=true    preview, change nothing (or: make dry-run tmux node)

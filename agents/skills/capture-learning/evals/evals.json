@@ -1,0 +1,41 @@
+{
+  "skill_name": "capture-learning",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "ugh TIL the integration tests fail silently unless you run `make seed-db` first. note that. my notes doc: [notes doc link]",
+      "expected_output": "A dated Gotchas entry with the command and workaround, possibly also a Local setup step, then a one-line reply saying what was filed where.",
+      "files": [],
+      "assertions": [
+        "Files the note under Gotchas with today's date",
+        "Includes the exact command `make seed-db`",
+        "If no edit tool is available, outputs paste-ready text for the section",
+        "The final reply is one line naming the section(s)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "What's the difference between a canary and a staging deploy? Save both terms to my notes.",
+      "expected_output": "A brief answer first, then two Glossary entries (term, meaning, where it shows up) in alphabetical order.",
+      "files": [],
+      "assertions": [
+        "Answers the question before filing anything",
+        "Produces two Glossary entries: canary before staging",
+        "Each entry has a term, a meaning and where it shows up",
+        "Asks for the notes doc location if none was given, or outputs paste-ready text"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "add to local setup: you need to export DB_PASSWORD=hunter2-example before running the app",
+      "expected_output": "A Local setup step that says to export DB_PASSWORD and where to get the value, without the secret itself.",
+      "files": [],
+      "assertions": [
+        "The value hunter2-example does not appear in the note",
+        "The note says where the secret lives or who to ask",
+        "Files the note under Local setup",
+        "Asks for the notes doc location if none was given, or outputs paste-ready text"
+      ]
+    }
+  ]
+}

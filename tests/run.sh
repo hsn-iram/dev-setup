@@ -127,12 +127,12 @@ ln -s "$REPO/agents/skills/deleted-skill" "$HOME/.claude/skills/deleted-skill"
 mkdir -p "$HOME/.claude/skills/my-own-skill" "$HOME/.agents/skills"
 ln -s /tmp "$HOME/.claude/skills/other-link"
 ln -s "$REPO/agents/skills/log-win" "$HOME/.agents/skills/log-win"
-rm "$HOME/.claude/skills/iram-tone"; ln -s "$REPO/skills/iram-tone" "$HOME/.claude/skills/iram-tone"
+rm "$HOME/.claude/skills/leadership-tone"; ln -s "$REPO/skills/leadership-tone" "$HOME/.claude/skills/leadership-tone"
 install skills >/dev/null
 check "broken link to a deleted skill is removed" '[[ ! -L "$HOME/.claude/skills/deleted-skill" ]]'
 check "link left in ~/.agents/skills by an old version is removed" '[[ ! -L "$HOME/.agents/skills/log-win" ]]'
 check "link into the old top-level skills/ folder is moved to agents/skills/" \
-  '[[ "$(readlink "$HOME/.claude/skills/iram-tone")" == "$REPO/agents/skills/iram-tone" && ! -e "$HOME/.dev-setup-backup" ]]'
+  '[[ "$(readlink "$HOME/.claude/skills/leadership-tone")" == "$REPO/agents/skills/leadership-tone" && ! -e "$HOME/.dev-setup-backup" ]]'
 check "your own skill folder is kept" '[[ -d "$HOME/.claude/skills/my-own-skill" ]]'
 check "links that point elsewhere are kept" '[[ -L "$HOME/.claude/skills/other-link" ]]'
 

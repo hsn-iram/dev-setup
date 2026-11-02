@@ -32,6 +32,8 @@ Skills use the open [Agent Skills](https://agentskills.io) format. `~/.claude/sk
 3. From the repo root, run `bin/validate-skills agents/skills/<name>`.
 4. Run `make skills`, then try the skill in a fresh agent session.
 
+**To score a skill:** run `TESSL_WORKSPACE=<name> bin/tessl-review [agents/skills/<name>]`. It's [Tessl](https://docs.tessl.io/improving-your-skills/reviewing-skills)'s quality review (fails below 70) and security scan (fails on high findings). Needs `brew install tesslio/tap/tessl` and `tessl login`. CI runs it on PRs that change skills, once the repo has a `TESSL_TOKEN` secret and a `TESSL_WORKSPACE` variable.
+
 **To test a skill:** ask Claude Code to "run the evals for `<name>` with skill-creator". It runs each prompt with and without the skill and grades the results. Results go in `skills/<name>-workspace/`, which git ignores.
 
 **To add a public skill:**

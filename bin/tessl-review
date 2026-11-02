@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# tessl-review [skill-dir ...]: review skills with Tessl (https://tessl.io).
+# Runs a quality review (fails below TESSL_THRESHOLD, default 70) and a security
+# scan (fails on TESSL_FAIL_ON or worse, default high) for each skill.
+# Needs `tessl login` or TESSL_TOKEN, plus TESSL_WORKSPACE (see `tessl workspace list`).
+# With no arguments, reviews every skill in agents/skills/.
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+THRESHOLD="${TESSL_THRESHOLD:-70}"
+FAIL_ON="${TESSL_FAIL_ON:-high}"
+
+command -v tessl >/dev/null 2>&1 || { echo "Needs the Tessl CLI: brew install tesslio/tap/tessl" >&2; exit 2; }
+[[ -n "${TESSL_WORKSPACE:-}" ]] || { echo "Set TESSL_WORKSPACE (names: tessl workspace list)" >&2; exit 2; }
+
+if [[ $# -gt 0 ]]; then
+  skills=("$@")
+else
+  skills=()
+  for d in "$REPO_DIR"/agents/skills/*/; do
+    [[ "$d" == *-workspace/ ]] && continue
+    skills+=("${d%/}")
+  done
+fi
+
+failed=0
+for skill in "${skills[@]}"; do
+  echo "==> $(basename "$skill")"
+  tessl review run "$skill" --workspace "$TESSL_WORKSPACE" --threshold "$THRESHOLD" || failed=1
+  tessl review run security "$skill" --workspace "$TESSL_WORKSPACE" --fail-on "$FAIL_ON" || failed=1
+done
+exit "$failed"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# dev-setup: set up a Mac for Claude Code, its plugins, agent skills, tmux and Cursor.
-# Run ./install.sh --help for options. Safe to re-run.
+# dev-setup engine. Usually run through make (run `make` to see targets).
+# Installs only the steps you name, or the ones in your approved list. Safe to re-run.
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -8,71 +8,123 @@ export REPO_DIR
 # shellcheck source=lib/common.sh
 source "$REPO_DIR/lib/common.sh"
 
-ALL_STEPS=(preflight claude plugins skills tmux cursor)
-ONLY=""; SKIP=""
+# Order matters: Homebrew first (programs need it), and software before agents
+# (the plugins step needs Claude Code).
+SOFTWARE=(homebrew uv node tenv claude-code tmux cursor)
+AGENTS=(plugins skills rules)
+CONFIGS=()
+for s in "${SOFTWARE[@]}"; do
+  [[ -f "$REPO_DIR/software/$s/config.sh" ]] && CONFIGS+=("$s-config")
+done
+APPROVED_FILE="${APPROVED_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/dev-setup/approved}"
 CLAUDE_VIA="${CLAUDE_VIA:-native}"
+STEPS=""; USE_APPROVED=0; INIT_APPROVED=0
 
 usage() {
   cat <<EOF
-Usage: ./install.sh [options]
+Pick what to install. Nothing installs unless you name it.
 
-  --dry-run             Show what would change; change nothing.
-  --only a,b            Run only these steps (${ALL_STEPS[*]}).
-  --skip a,b            Skip these steps.
-  --claude-via brew     Install Claude Code with Homebrew instead of the official
-                        native installer (use if your company requires brew).
-  --yes                 Answer yes to prompts (including third-party plugins).
-  -h, --help            Show this help.
+  Programs (each also writes its config):
+    ${SOFTWARE[*]}
+  Config only, for a program installed another way:
+    ${CONFIGS[*]}
+  AI agent setup (installs no programs), or "agents" for all three:
+    ${AGENTS[*]}
 
-Steps:
-  preflight  Checks: macOS, not root, Homebrew, company-managed Claude settings.
-  claude     Installs Claude Code; puts ~/.local/bin on PATH in ~/.zshrc.
-  plugins    Installs the plugins listed in config/plugins.conf.
-  skills     Links skills/ into ~/.agents/skills and ~/.claude/skills; installs ~/.claude/CLAUDE.md.
-  tmux       Installs tmux (Homebrew), ~/.tmux.conf, and the tclaude helper.
-  cursor     Installs Cursor (Homebrew) and the Claude Code extension.
+  make tmux node                 install these
+  make tmux node dry-run=true    preview, change nothing (or: make dry-run tmux node)
+  make approved                  create or show this laptop's approved list
+  make install                   install everything on the approved list
+  make test                      run the tests
+
+  Options: dry-run=true   yes=true (answer yes to prompts)   claude-via=brew
+  Without make: ./install.sh [--dry-run] [--yes] [--claude-via brew] [--approved] step ...
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run) DRY_RUN=1 ;;
-    --only) ONLY="${2:?--only needs a list}"; shift ;;
-    --skip) SKIP="${2:?--skip needs a list}"; shift ;;
-    --claude-via) CLAUDE_VIA="${2:?--claude-via needs native|brew}"; shift ;;
     --yes) ASSUME_YES=1 ;;
+    --claude-via) CLAUDE_VIA="${2:?--claude-via needs native|brew}"; shift ;;
+    --approved) USE_APPROVED=1 ;;
+    --init-approved) INIT_APPROVED=1 ;;
+    --list) echo "${SOFTWARE[*]} ${CONFIGS[*]} ${AGENTS[*]} agents"; exit 0 ;;
     -h|--help) usage; exit 0 ;;
-    *) usage; die "Unknown option: $1" ;;
+    -*) usage; die "Unknown option: $1" ;;
+    *) STEPS="$STEPS ${1//,/ }" ;;
   esac
   shift
 done
 export DRY_RUN ASSUME_YES CLAUDE_VIA
 
-# Reject unknown step names, so a typo doesn't silently run nothing.
-for s in ${ONLY//,/ } ${SKIP//,/ }; do
-  [[ " ${ALL_STEPS[*]} " == *" $s "* ]] || die "Unknown step '$s'. Steps: ${ALL_STEPS[*]}"
-done
+if [[ "$INIT_APPROVED" == "1" ]]; then
+  if [[ ! -f "$APPROVED_FILE" ]]; then
+    mkdir -p "$(dirname "$APPROVED_FILE")"
+    {
+      echo "# What this laptop is approved to install. Not in git: approvals depend on the employer."
+      echo "# Uncomment a line to approve it, then run: make install"
+      echo "#"
+      echo "# Programs (each also writes its config):"
+      for s in "${SOFTWARE[@]}"; do echo "# $s"; done
+      echo "#"
+      echo "# Config only, for programs installed another way (for example by IT):"
+      for s in "${CONFIGS[@]}"; do echo "# $s"; done
+      echo "#"
+      echo "# AI agent setup (installs no programs; plugins needs Claude Code):"
+      for s in "${AGENTS[@]}"; do echo "# $s"; done
+    } > "$APPROVED_FILE"
+    info "Created $APPROVED_FILE"
+  fi
+  info "Approved list: $APPROVED_FILE"
+  cat "$APPROVED_FILE"
+  exit 0
+fi
 
-wants() {
-  local s="$1"
-  [[ -n "$ONLY" && ",$ONLY," != *",$s,"* ]] && return 1
-  [[ ",$SKIP," == *",$s,"* ]] && return 1
-  return 0
-}
+if [[ "$USE_APPROVED" == "1" ]]; then
+  [[ -f "$APPROVED_FILE" ]] || die "No approved list at $APPROVED_FILE. Create one with: make approved"
+  STEPS="$STEPS $(sed 's/#.*//' "$APPROVED_FILE" | tr '\n' ' ')"
+fi
+
+read -r -a requested <<< "$STEPS"
+if [[ ${#requested[@]} -eq 0 ]]; then
+  usage
+  die "Nothing selected. Name the steps to run (make tmux skills), or approve some (make approved)."
+fi
+
+# Space-padded list of what to run, so membership is a substring check.
+selected=" "
+for item in "${requested[@]}"; do
+  case " ${SOFTWARE[*]} ${CONFIGS[*]} ${AGENTS[*]} " in
+    *" $item "*) selected="$selected$item " ;;
+    *) if [[ "$item" == "agents" ]]; then selected="$selected${AGENTS[*]} "
+       else die "Unknown step '$item'. Run ./install.sh --help for the list."; fi ;;
+  esac
+done
 
 [[ "$DRY_RUN" == "1" ]] && say "DRY RUN: nothing will be changed"
 
-for step in "${ALL_STEPS[@]}"; do
-  if wants "$step"; then
+# shellcheck source=lib/preflight.sh
+source "$REPO_DIR/lib/preflight.sh"
+
+for step in "${SOFTWARE[@]}"; do
+  STEP_DIR="$REPO_DIR/software/$step"; export STEP_DIR
+  if [[ "$selected" == *" $step "* ]]; then
     # shellcheck source=/dev/null
-    source "$REPO_DIR/steps/$step.sh"
+    source "$STEP_DIR/install.sh"
+  fi
+  [[ -f "$STEP_DIR/config.sh" ]] || continue
+  if [[ "$selected" == *" $step "* || "$selected" == *" $step-config "* ]]; then
+    # shellcheck source=/dev/null
+    source "$STEP_DIR/config.sh"
   fi
 done
 
+for step in "${AGENTS[@]}"; do
+  [[ "$selected" == *" $step "* ]] || continue
+  STEP_DIR="$REPO_DIR/agents/$step"; export STEP_DIR
+  # shellcheck source=/dev/null
+  source "$STEP_DIR/install.sh"
+done
+
 say "Done."
-cat <<'EOF'
-Next:
-  1. Open a new terminal (or: source ~/.zshrc).
-  2. Run `claude` and log in. Use the account your company approved.
-  3. Inside tmux, Shift+Enter inserts a newline. Run `tclaude` in a project to try it.
-EOF

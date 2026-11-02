@@ -5,7 +5,7 @@ if has claude; then
   if [[ "$DRY_RUN" == "1" ]]; then info "Already installed: $(command -v claude)"
   else info "Already installed: $(claude --version 2>/dev/null || echo unknown)"; fi
 elif [[ "$CLAUDE_VIA" == "brew" ]]; then
-  has brew || die "--claude-via brew needs Homebrew."
+  has brew || die "claude-via=brew needs Homebrew."
   run brew install --cask claude-code
   info "Homebrew installs don't auto-update. Upgrade with: brew upgrade claude-code"
 else
@@ -19,11 +19,7 @@ else
   fi
 fi
 
-# ~/.local/bin holds the native claude binary and the tclaude helper.
 case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) export PATH="$HOME/.local/bin:$PATH" ;; esac
-# shellcheck disable=SC2016  # literal $HOME/$PATH wanted in the rc file
-write_rc_block 'export PATH="$HOME/.local/bin:$PATH"'
-
 if [[ "$DRY_RUN" != "1" ]]; then
   has claude || die "claude isn't on PATH after install. Open a new terminal and re-run."
 fi

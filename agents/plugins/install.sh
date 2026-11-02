@@ -1,11 +1,14 @@
 # shellcheck shell=bash
-say "Claude Code plugins (config/plugins.conf)"
+say "Claude Code plugins (agents/plugins/plugins.conf)"
 
+# Not every laptop gets Claude Code, so a missing claude skips this step
+# instead of stopping the run.
 if ! has claude; then
   if [[ "$DRY_RUN" == "1" ]]; then
     info "[dry-run] claude isn't installed yet; plugin checks below are approximate."
   else
-    die "Claude Code isn't installed. Run the claude step first."
+    warn "Skipping plugins: Claude Code isn't installed. Install it with: make claude-code"
+    return 0
   fi
 fi
 
@@ -47,7 +50,7 @@ while IFS="|" read -r -u 3 src market plugin trust; do
   else
     run claude plugin install "$plugin@$market" --scope user || warn "Couldn't install $plugin@$market"
   fi
-done 3< "$REPO_DIR/config/plugins.conf"
+done 3< "$STEP_DIR/plugins.conf"
 
 # Earlier versions installed the third-party plugins straight from their own
 # (unpinned) marketplaces. Two copies would both run their hooks.

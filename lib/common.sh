@@ -59,11 +59,28 @@ install_file() {
   [[ "$DRY_RUN" == "1" ]] || info "Installed $dest"
 }
 
-# Replace (or append) this tool's marked block in the shell rc file.
-# Lines outside the markers are never touched. Backs up the rc file first.
-# Skips a symlinked rc file (dotfiles repo) and stops on a damaged block.
+# Install Homebrew packages: brew_install [--cask] name ...
+# Every program step needs Homebrew; a dry run without it just says so.
+brew_install() {
+  if ! has brew; then
+    [[ "$DRY_RUN" == "1" ]] || die "Homebrew isn't installed. Run: make homebrew"
+    info "[dry-run] needs Homebrew (make homebrew), then: brew install $*"
+    return 0
+  fi
+  run brew install "$@"
+}
+
+# Replace (or append) a marked block in the shell rc file: write_rc_block BODY [NAME].
+# Each NAME gets its own block, so steps don't overwrite each other; without a
+# NAME it's the original mac-setup block. Lines outside the markers are never
+# touched. Backs up the rc file first. Skips a symlinked rc file (dotfiles repo)
+# and stops on a damaged block.
 write_rc_block() {
   local body="$1" tmp begins=0 ends=0
+  local BLOCK_BEGIN="$BLOCK_BEGIN" BLOCK_END="$BLOCK_END"
+  if [[ -n "${2:-}" ]]; then
+    BLOCK_BEGIN="# >>> dev-setup $2 >>>"; BLOCK_END="# <<< dev-setup $2 <<<"
+  fi
   if [[ -L "$RC_FILE" ]]; then
     warn "Skipping $RC_FILE: it's a symlink to $(readlink "$RC_FILE"), so another tool manages it."
     info "Add these lines to it yourself:"; printf '      %s\n' "$body"

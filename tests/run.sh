@@ -35,7 +35,7 @@ check "dry run leaves an empty home empty" '[[ -z "$created" ]]'
 
 # 2b. Claude Code is only touched when named; -config skips the program install.
 check "the old agents catch-all is gone" '! install agents >/dev/null'
-out="$(install --dry-run skills claude-plugins claude-rules tmux)"
+out="$(install --dry-run skills agents-md claude-plugins claude-rules tmux)"
 check "agent steps and tmux don't install Claude Code" '! grep -qE "==> Claude Code([^ ]|$)" <<< "$out"'
 out="$(install --dry-run claude-code)"
 check "naming claude-code does run it" 'grep -qE "==> Claude Code([^ ]|$)" <<< "$out"'
@@ -132,27 +132,35 @@ rm "$HOME/.claude/rules/i-have-adhd.md"
 ADHD_ALWAYS_ON=0 install claude-rules >/dev/null
 check "ADHD_ALWAYS_ON=0 skips the i-have-adhd rule" '[[ ! -e "$HOME/.claude/rules/i-have-adhd.md" ]]'
 
-# 3. A real skills and rules run links every skill and installs the rules file.
+# 3. A real skills and rules run links every skill and the global AGENTS.md.
 fresh_home
-install skills claude-rules >/dev/null
+mkdir -p "$HOME/.cursor"
+install skills agents-md claude-rules >/dev/null
 for s in "$REPO"/agents/skills/*/; do
   n="$(basename "$s")"
   check "skill $n linked into ~/.claude/skills" '[[ "$(readlink "$HOME/.claude/skills/$n")" == "$REPO/agents/skills/$n" ]]'
 done
-check "rules installed to ~/.claude/rules/dev-setup.md" 'cmp -s "$REPO/agents/claude-rules/CLAUDE.md" "$HOME/.claude/rules/dev-setup.md"'
-check "~/.claude/CLAUDE.md is not created" '[[ ! -e "$HOME/.claude/CLAUDE.md" ]]'
+check "~/.claude/CLAUDE.md links to AGENTS.md" '[[ "$(readlink "$HOME/.claude/CLAUDE.md")" == "$REPO/agents/agents-md/AGENTS.md" ]]'
+check "rules aren't also copied to ~/.claude/rules/dev-setup.md" '[[ ! -e "$HOME/.claude/rules/dev-setup.md" ]]'
+check "Cursor gets an always-on copy of AGENTS.md" \
+  'head -4 "$HOME/.cursor/rules/agents.mdc" | grep -qx "alwaysApply: true" && diff <(tail -n +5 "$HOME/.cursor/rules/agents.mdc") "$REPO/agents/agents-md/AGENTS.md" >/dev/null'
+if ! command -v codex >/dev/null; then
+  check "~/.codex isn't created without Codex" '[[ ! -e "$HOME/.codex" ]]'
+fi
 if ! command -v codex >/dev/null && ! command -v gemini >/dev/null; then
   check "~/.agents/skills not used without Codex or Gemini CLI" '[[ ! -e "$HOME/.agents/skills" ]]'
 fi
 
 # 4. Re-running changes nothing.
-out="$(install skills claude-rules)"
-check "second run changes nothing" '! grep -qE "Linked|Installed|Backing up|Removing" <<< "$out"'
+out="$(install skills agents-md claude-rules)"
+check "second run changes nothing" '! grep -qE "Linked|Installed|Backing up|Removing|Moving" <<< "$out"'
 
-# 5. User edits to ~/.claude/CLAUDE.md survive a re-run.
-echo "- my own rule" > "$HOME/.claude/CLAUDE.md"
-install claude-rules >/dev/null
-check "own ~/.claude/CLAUDE.md is left alone" 'grep -q "my own rule" "$HOME/.claude/CLAUDE.md"'
+# 5. Your own ~/.claude/CLAUDE.md is backed up, not lost, when the link replaces it.
+rm "$HOME/.claude/CLAUDE.md"; echo "- my own rule" > "$HOME/.claude/CLAUDE.md"
+out="$(install agents-md)"
+check "own ~/.claude/CLAUDE.md is backed up and you're told" \
+  'grep -rqs "my own rule" "$HOME/.dev-setup-backup" && grep -q "Copy any of your own lines" <<< "$out" && [[ -L "$HOME/.claude/CLAUDE.md" ]]'
+rm -rf "$HOME/.dev-setup-backup"
 
 # 6. Stale links are pruned; real folders and other links are not.
 ln -s "$REPO/agents/skills/deleted-skill" "$HOME/.claude/skills/deleted-skill"
@@ -172,9 +180,18 @@ check "links that point elsewhere are kept" '[[ -L "$HOME/.claude/skills/other-l
 if git -C "$REPO" cat-file -e 485b7c7 2>/dev/null; then
   fresh_home; mkdir -p "$HOME/.claude"
   git -C "$REPO" show 485b7c7:config/CLAUDE.md > "$HOME/.claude/CLAUDE.md"
-  install claude-rules >/dev/null
-  check "old unedited ~/.claude/CLAUDE.md is moved to the backup folder" \
-    '[[ ! -e "$HOME/.claude/CLAUDE.md" && -n "$(find "$HOME/.dev-setup-backup" -name CLAUDE.md)" ]]'
+  install agents-md >/dev/null
+  check "old ~/.claude/CLAUDE.md is moved to the backup folder and replaced by the link" \
+    '[[ -L "$HOME/.claude/CLAUDE.md" && -n "$(find "$HOME/.dev-setup-backup" -name CLAUDE.md)" ]]'
+fi
+
+# 7b. The old ~/.claude/rules/dev-setup.md copy is moved out, so rules don't load twice.
+if git -C "$REPO" cat-file -e bdefcdc:agents/claude-rules/CLAUDE.md 2>/dev/null; then
+  fresh_home; mkdir -p "$HOME/.claude/rules"
+  git -C "$REPO" show bdefcdc:agents/claude-rules/CLAUDE.md > "$HOME/.claude/rules/dev-setup.md"
+  install agents-md >/dev/null
+  check "old ~/.claude/rules/dev-setup.md is moved to the backup folder" \
+    '[[ ! -e "$HOME/.claude/rules/dev-setup.md" && -n "$(find "$HOME/.dev-setup-backup" -name dev-setup.md)" ]]'
 fi
 
 # 8. Symlinked dotfiles are never replaced or written through.

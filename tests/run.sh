@@ -49,6 +49,14 @@ out="$(install --dry-run wezterm)"
 check "an app already in ~/Applications isn't installed again" 'grep -q "already installed: $HOME/Applications/WezTerm.app" <<< "$out" && ! grep -q "brew install --cask wezterm" <<< "$out"'
 rm -rf "$HOME/Applications"
 
+# 2b3. Shell color steps write their own rc blocks, and starship.toml is linked.
+fresh_home
+install starship-config zsh-plugins-config bat-config >/dev/null
+check "starship-config links starship.toml" '[[ "$(readlink "$HOME/.config/starship.toml")" == "$REPO/software/starship/starship.toml" ]]'
+check "shell color steps each add a block" '[[ $(grep -cE "^# >>> dev-setup (starship|zsh-plugins|bat) >>>$" "$HOME/.zshrc") == 3 ]]'
+check "syntax highlighting loads after autosuggestions" '[[ $(grep -n zsh-autosuggestions.zsh "$HOME/.zshrc" | cut -d: -f1) -lt $(grep -n zsh-syntax-highlighting.zsh "$HOME/.zshrc" | cut -d: -f1) ]]'
+check "the rc file still parses" 'if command -v zsh >/dev/null; then zsh -n "$HOME/.zshrc"; else bash -n "$HOME/.zshrc"; fi'
+
 # 2b2. wezterm-config links the config into the repo; tmux-config installs the cheat sheet.
 fresh_home
 install wezterm-config tmux-config >/dev/null

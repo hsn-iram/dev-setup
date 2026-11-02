@@ -11,6 +11,9 @@ One folder per program. `make <program>` runs its `install.sh`, then its `config
 | `claude-code` | Claude Code, with [Anthropic's installer](https://code.claude.com/docs/en/setup) | Puts `~/.local/bin` on PATH |
 | `tmux` | tmux | `~/.tmux.conf`, the `tclaude` helper and the cheat sheet (`Ctrl+b ?`) |
 | `wezterm` | WezTerm | Links `~/.config/wezterm/wezterm.lua` to this repo. Opens straight into tmux |
+| `starship` | [Starship](https://starship.rs), the prompt | Folder, git branch and status, slow-command time; `❯` turns red after an error. Links `~/.config/starship.toml` |
+| `zsh-plugins` | zsh-autosuggestions and zsh-syntax-highlighting | Grey suggestions from history (`→` accepts one), and commands turn green or red as you type |
+| `bat` | [bat](https://github.com/sharkdp/bat), `cat` with syntax highlighting | `cat` runs bat in your shell, using the terminal's theme colors |
 | `cursor` | Cursor | The Claude Code extension, if Claude Code is installed |
 
 Every change to `~/.zshrc` goes in a marked block (`# >>> dev-setup <name> >>>`). To undo one, delete its block. Replaced files are saved as `<file>.bak.<timestamp>`.
@@ -42,7 +45,7 @@ WezTerm opens into the tmux session `main`, creating it if needed, so closing th
 | `Cmd+Shift+P` | Search every WezTerm action, including each theme |
 | `Shift+click` | Open a link (tmux takes plain clicks) |
 
-To change themes, transparency or font size, edit the "Settings to tweak" block at the top of `wezterm.lua`. tmux uses the theme's own colors, so it follows along.
+To change themes, transparency or font size, edit the "Settings to tweak" block at the top of `wezterm.lua`. tmux, the tab bar, Starship, the zsh plugins and bat all use the theme's own colors, so they follow along.
 
 **Editing the Lua:** open the repo in Cursor and accept the recommended extensions (Lua and StyLua). Then run `bin/lua-types` once, for autocomplete and checks on every WezTerm setting. Saving formats the file with StyLua, and CI fails if it isn't formatted.
 

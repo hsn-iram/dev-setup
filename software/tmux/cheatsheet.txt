@@ -22,6 +22,7 @@
       v / y        in copy mode: start selecting / copy to the clipboard
       /            in copy mode: search
     tclaude      (typed in the shell) Claude Code left, shell right, for this folder
+                 only installed where Claude Code is
 
   STAGE 4: WEZTERM (week 3)  no prefix for these
     Cmd+Shift+L    next theme (remembered after restart)

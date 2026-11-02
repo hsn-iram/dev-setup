@@ -2,7 +2,11 @@
 say "tmux config"
 
 install_file "$STEP_DIR/tmux.conf" "$HOME/.tmux.conf" 644
-install_file "$STEP_DIR/tclaude" "$HOME/.local/bin/tclaude" 755
+if has claude; then
+  install_file "$STEP_DIR/tclaude" "$HOME/.local/bin/tclaude" 755
+else
+  info "Skipping tclaude: Claude Code isn't installed on this laptop."
+fi
 install_file "$STEP_DIR/cheatsheet.txt" "$HOME/.config/tmux/cheatsheet.txt" 644
 
 # Reload any running tmux server so the new config applies now.

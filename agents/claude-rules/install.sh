@@ -20,6 +20,7 @@ elif [[ -f "$adhd_skill" ]]; then
 else
   info "i-have-adhd isn't downloaded yet, so it isn't on for every session. Run: make skills claude-rules"
 fi
+# shellcheck disable=SC2088  # display text
 [[ -f "$HOME/.claude/.i-have-adhd-always" ]] && info "~/.claude/.i-have-adhd-always is from the old plugin; you can delete it."
 
 # Earlier versions installed these rules as ~/.claude/CLAUDE.md itself.

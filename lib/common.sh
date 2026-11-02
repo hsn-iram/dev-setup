@@ -20,7 +20,7 @@ has() { command -v "$1" >/dev/null 2>&1; }
 trim() { local s="$1"; s="${s#"${s%%[![:space:]]*}"}"; printf '%s' "${s%"${s##*[![:space:]]}"}"; }
 
 # Public skills (agents/skills/public.conf) are downloaded here, then linked.
-PUBLIC_SKILLS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/dev-setup/public-skills"
+export PUBLIC_SKILLS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/dev-setup/public-skills"
 
 # Run a command, or just print it in dry-run mode.
 run() {

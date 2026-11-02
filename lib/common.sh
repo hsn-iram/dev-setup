@@ -75,6 +75,35 @@ brew_install() {
   run brew install "$@"
 }
 
+# Print where a Mac app is installed: ~/Applications, /Applications, then anywhere
+# Spotlight has seen it (for example, unzipped in Downloads). Matches the bundle ID,
+# so a renamed app still counts. Fails if there's no copy.
+#   find_app BUNDLE_ID NAME
+find_app() {
+  local bundle_id="$1" name="$2" p
+  for p in "$HOME/Applications/$name.app" "/Applications/$name.app"; do
+    [[ -d "$p" ]] && { printf '%s\n' "$p"; return 0; }
+  done
+  has mdfind || return 1
+  p="$(mdfind "kMDItemCFBundleIdentifier == '$bundle_id'" 2>/dev/null | grep -v '/\.Trash/' | head -1 || true)"
+  [[ -n "$p" ]] && printf '%s\n' "$p"
+}
+
+# Install a Mac app with Homebrew, unless a copy is already on this Mac.
+#   install_app BUNDLE_ID NAME CASK
+install_app() {
+  local bundle_id="$1" name="$2" cask="$3" app
+  if app="$(find_app "$bundle_id" "$name")"; then
+    info "$name is already installed: $app"
+    case "$app" in
+      /Applications/* | "$HOME"/Applications/*) ;;
+      *) warn "$name is outside Applications. Move it to /Applications so it opens and updates reliably." ;;
+    esac
+    return 0
+  fi
+  brew_install --cask "$cask"
+}
+
 # Replace (or append) a marked block in the shell rc file: write_rc_block BODY [NAME].
 # Each NAME gets its own block, so steps don't overwrite each other; without a
 # NAME it's the original mac-setup block. Lines outside the markers are never

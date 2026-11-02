@@ -1,0 +1,14 @@
+# ~/.config/starship.toml, linked from dev-setup (github.com/hsn-iram/dev-setup).
+# Colors are terminal color names (purple, red, ...), so the prompt follows the WezTerm theme.
+# After Kun Chen's prompt: folder, git branch and status, slow-command time, then ❯.
+"$schema" = "https://starship.rs/config-schema.json"
+
+add_newline = false
+format = "$directory$git_branch$git_status$cmd_duration$line_break$character"
+
+[character]
+success_symbol = "[❯](purple)"
+error_symbol = "[❯](red)"
+
+[cmd_duration]
+format = "[$duration]($style) "

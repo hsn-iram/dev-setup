@@ -66,6 +66,23 @@ end
 
 -- --- Look -------------------------------------------------------------------------
 config.color_scheme = saved_theme()
+
+-- Tab bar colors come from the theme too, matching tmux: the accent color (magenta)
+-- marks the active tab, and the rest stay dim. Shows when there's a second tab.
+local scheme = wezterm.color.get_builtin_schemes()[config.color_scheme]
+if scheme then
+  local accent, dim = scheme.ansi[6], scheme.brights[1]
+  config.colors = {
+    tab_bar = {
+      background = scheme.background,
+      active_tab = { bg_color = accent, fg_color = scheme.background, intensity = 'Bold' },
+      inactive_tab = { bg_color = scheme.background, fg_color = dim },
+      inactive_tab_hover = { bg_color = scheme.background, fg_color = scheme.foreground },
+      new_tab = { bg_color = scheme.background, fg_color = dim },
+      new_tab_hover = { bg_color = scheme.background, fg_color = accent },
+    },
+  }
+end
 -- Bundled with WezTerm, along with Nerd Font symbols as a fallback, so nothing to install.
 config.font = wezterm.font 'JetBrains Mono'
 config.font_size = FONT_SIZE

@@ -7,6 +7,8 @@
 - Concise. I'm a senior engineer; skip basics unless I ask.
 - Direct: if my approach is wrong or there's a better one, say so first.
 - Cite code as `path/to/file:line`.
+- Link official docs for the tools, libraries, services and specs an answer relies on: the specific page, not the homepage. Quote the line that backs a key claim.
+- When I'm learning or deciding something, end with a short reading list of official docs: read first, then reference. Prefer vendor docs and source code over blogs; say when only third-party sources exist.
 - Never use em dashes. Use commas, colons, full stops or parentheses.
 
 ## Writing for others
@@ -26,6 +28,11 @@
 ## Reviews
 - End every review of a PR or change with `Confidence: NN%` and the main reason it isn't 100%.
 
+## Containers
+- Containers run on Colima with the docker CLI. Never install or suggest Docker Desktop.
+
 ## Safety
 - No secrets or employer code, data, names or URLs in personal or public repos.
 - Ask before installs, migrations, pushes or deploys.
+- Never post anything on my behalf (PR comments, reviews, approvals, issues, Slack, email) unless I explicitly tell you to. Draft it in chat instead.
+- Never run `dd` (any `if=` / `of=` / `bs=` / `count=` form). It is security-flagged. Do not suggest the user run it either; for random data use `head` or `openssl` (for example `head -c 150M /dev/urandom > /tmp/big.bin` or `openssl rand -out /tmp/big.bin 157286400`), or ask first.
